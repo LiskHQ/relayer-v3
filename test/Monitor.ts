@@ -10,19 +10,14 @@ import {
 import { CrossChainTransferClient } from "../src/clients/bridges";
 import { spokePoolClientsToProviders } from "../src/common";
 import { Dataworker } from "../src/dataworker/Dataworker";
-import { BalanceType, V3DepositWithBlock } from "../src/interfaces";
-import {
-  ALL_CHAINS_NAME,
-  Monitor,
-  REBALANCE_FINALIZE_GRACE_PERIOD,
-  UNKNOWN_TRANSFERS_NAME,
-} from "../src/monitor/Monitor";
+import { BalanceType, L1Token, V3DepositWithBlock } from "../src/interfaces";
+import { ALL_CHAINS_NAME, Monitor, REBALANCE_FINALIZE_GRACE_PERIOD } from "../src/monitor/Monitor";
 import { MonitorConfig } from "../src/monitor/MonitorConfig";
 import { MAX_UINT_VAL, getNetworkName, toBN } from "../src/utils";
 import * as constants from "./constants";
 import { amountToDeposit, destinationChainId, mockTreeRoot, originChainId, repaymentChainId } from "./constants";
 import { setupDataworker } from "./fixtures/Dataworker.Fixture";
-import { MockAdapterManager } from "./mocks";
+import { MockAdapterManager, SimpleMockHubPoolClient } from "./mocks";
 import {
   BigNumber,
   Contract,
@@ -35,6 +30,20 @@ import {
   lastSpyLogIncludes,
   toBNWei,
 } from "./utils";
+
+type TokenMap = { [l2TokenAddress: string]: L1Token };
+
+class TestMonitor extends Monitor {
+  private overriddenTokenMap: { [chainId: number]: TokenMap } = {};
+
+  setL2ToL1TokenMap(chainId: number, map: TokenMap): void {
+    this.overriddenTokenMap[chainId] = map;
+  }
+  // Override internal function that calls into externally defined and hard-coded TOKEN_SYMBOLS_MAP.
+  protected getL2ToL1TokenMap(l1Tokens: L1Token[], chainId): TokenMap {
+    return this.overriddenTokenMap[chainId] ?? super.getL2ToL1TokenMap(l1Tokens, chainId);
+  }
+}
 
 describe("Monitor", async function () {
   const TEST_NETWORK_NAMES = ["Hardhat1", "Hardhat2", "unknown", ALL_CHAINS_NAME];
@@ -79,6 +88,8 @@ describe("Monitor", async function () {
   };
 
   beforeEach(async function () {
+    let _hubPoolClient: HubPoolClient;
+    let _updateAllClients: () => Promise<void>;
     ({
       configStoreClient,
       hubPool,
@@ -90,16 +101,33 @@ describe("Monitor", async function () {
       l1Token_1: l1Token,
       spokePool_1,
       spokePool_2,
-      hubPoolClient,
+      hubPoolClient: _hubPoolClient,
       spokePoolClients,
       multiCallerClient,
-      updateAllClients,
+      updateAllClients: _updateAllClients,
     } = await setupDataworker(
       ethers,
       constants.MAX_REFUNDS_PER_RELAYER_REFUND_LEAF,
       constants.MAX_L1_TOKENS_PER_POOL_REBALANCE_LEAF,
       0
     ));
+
+    // Use a mock hub pool client for these tests so we can hardcode the L1TokenInfo for arbitrary tokens.
+    hubPoolClient = new SimpleMockHubPoolClient(
+      spyLogger,
+      hubPool,
+      configStoreClient,
+      _hubPoolClient.deploymentBlock,
+      _hubPoolClient.chainId
+    );
+    updateAllClients = async () => {
+      await _updateAllClients();
+      await hubPoolClient.update();
+    };
+
+    [l2Token.address, erc20_2.address, l1Token.address].forEach((token) =>
+      (hubPoolClient as SimpleMockHubPoolClient).mapTokenInfo(token, "L1Token1")
+    );
 
     defaultMonitorEnvVars = {
       STARTING_BLOCK_NUMBER: "0",
@@ -140,7 +168,7 @@ describe("Monitor", async function () {
     adapterManager = new MockAdapterManager(null, null, null, null);
     adapterManager.setSupportedChains(chainIds);
     crossChainTransferClient = new CrossChainTransferClient(spyLogger, chainIds, adapterManager);
-    monitorInstance = new Monitor(spyLogger, monitorConfig, {
+    monitorInstance = new TestMonitor(spyLogger, monitorConfig, {
       bundleDataClient,
       configStoreClient,
       multiCallerClient,
@@ -149,7 +177,27 @@ describe("Monitor", async function () {
       tokenTransferClient,
       crossChainTransferClient,
     });
-
+    (monitorInstance as TestMonitor).setL2ToL1TokenMap(originChainId, {
+      [l2Token.address]: {
+        symbol: "L1Token1",
+        address: l1Token.address,
+        decimals: 18,
+      },
+    });
+    (monitorInstance as TestMonitor).setL2ToL1TokenMap(destinationChainId, {
+      [erc20_2.address]: {
+        symbol: "L1Token1",
+        address: l1Token.address,
+        decimals: 18,
+      },
+    });
+    (monitorInstance as TestMonitor).setL2ToL1TokenMap(hubPoolClient.chainId, {
+      [l1Token.address]: {
+        symbol: "L1Token1",
+        address: l1Token.address,
+        decimals: 18,
+      },
+    });
     await updateAllClients();
   });
 
@@ -214,7 +262,7 @@ describe("Monitor", async function () {
     // Have the data worker propose a new bundle.
     await dataworkerInstance.proposeRootBundle(spokePoolClients);
     await l1Token.approve(hubPool.address, MAX_UINT_VAL);
-    await multiCallerClient.executeTransactionQueue();
+    await multiCallerClient.executeTxnQueues();
 
     // While the new bundle is still pending, refunds are in the "next" category
     await updateAllClients();
@@ -261,7 +309,7 @@ describe("Monitor", async function () {
     };
     await monitorInstance.update();
     await dataworkerInstance.executeRelayerRefundLeaves(spokePoolClients, new BalanceAllocator(providers));
-    await multiCallerClient.executeTransactionQueue();
+    await multiCallerClient.executeTxnQueues();
 
     // Now, pending refunds should be 0.
     await monitorInstance.update();
@@ -278,6 +326,7 @@ describe("Monitor", async function () {
     crossChainTransferClient.increaseOutstandingTransfer(
       depositor.address,
       l1Token.address,
+      l2Token.address,
       toBN(5),
       destinationChainId
     );
@@ -306,7 +355,7 @@ describe("Monitor", async function () {
     // Have the data worker propose a new bundle.
     await dataworkerInstance.proposeRootBundle(spokePoolClients);
     await l1Token.approve(hubPool.address, MAX_UINT_VAL);
-    await multiCallerClient.executeTransactionQueue();
+    await multiCallerClient.executeTxnQueues();
 
     // Execute pool rebalance leaves.
     await executeBundle(hubPool);
@@ -319,7 +368,8 @@ describe("Monitor", async function () {
       originChainId,
       spokePool_1.address,
       l1Token.address,
-      toBN(5)
+      toBN(5),
+      l2Token.address
     );
     await updateAllClients();
     await monitorInstance.update();
@@ -353,20 +403,6 @@ describe("Monitor", async function () {
     expect(lastSpyLogIncludes(spy, "Unfilled deposits ⏱")).to.be.true;
     const log = spy.lastCall;
     expect(log.lastArg.mrkdwn).to.contains("100.00");
-  });
-
-  it("Monitor should report unknown transfers", async function () {
-    await l2Token.connect(depositor).transfer(dataworker.address, 1);
-
-    await monitorInstance.update();
-    const reports = monitorInstance.initializeBalanceReports(
-      monitorInstance.monitorConfig.monitoredRelayers,
-      monitorInstance.clients.hubPoolClient.getL1Tokens(),
-      [UNKNOWN_TRANSFERS_NAME]
-    );
-    monitorInstance.updateUnknownTransfers(reports);
-
-    expect(lastSpyLogIncludes(spy, `Transfers that are not fills for relayer ${depositor.address} 🦨`)).to.be.true;
   });
 
   it("Monitor should send token refills", async function () {
@@ -407,7 +443,7 @@ describe("Monitor", async function () {
     await _monitor.refillBalances();
 
     expect(multiCallerClient.transactionCount()).to.equal(1);
-    await multiCallerClient.executeTransactionQueue();
+    await multiCallerClient.executeTxnQueues();
 
     expect(await spokePool_1.provider.getBalance(spokePool_1.address)).to.equal(toBNWei("2"));
   });

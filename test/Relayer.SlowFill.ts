@@ -17,7 +17,7 @@ import {
   destinationChainId,
   repaymentChainId,
 } from "./constants";
-import { MockInventoryClient } from "./mocks";
+import { MockInventoryClient, SimpleMockHubPoolClient } from "./mocks";
 import {
   Contract,
   SignerWithAddress,
@@ -102,7 +102,7 @@ describe("Relayer: Initiates slow fill requests", async function () {
     configStoreClient = new ConfigStoreClient(spyLogger, configStore, { fromBlock: 0 }, CONFIG_STORE_VERSION);
     await configStoreClient.update();
 
-    hubPoolClient = new HubPoolClient(spyLogger, hubPool, configStoreClient);
+    hubPoolClient = new SimpleMockHubPoolClient(spyLogger, hubPool, configStoreClient);
     await hubPoolClient.update();
 
     multiCallerClient = new MockedMultiCallerClient(spyLogger); // leave out the gasEstimator for now.
@@ -158,7 +158,6 @@ describe("Relayer: Initiates slow fill requests", async function () {
       {
         relayerTokens: [],
         slowDepositors: [],
-        relayerDestinationChains: [],
         minDepositConfirmations: defaultMinDepositConfirmations,
       } as unknown as RelayerConfig
     );
@@ -169,6 +168,8 @@ describe("Relayer: Initiates slow fill requests", async function () {
     await setupTokensForWallet(spokePool_2, depositor, [erc20_2], weth, 10);
     await setupTokensForWallet(spokePool_1, relayer, [erc20_1, erc20_2], weth, 10);
     await setupTokensForWallet(spokePool_2, relayer, [erc20_1, erc20_2], weth, 10);
+    (hubPoolClient as SimpleMockHubPoolClient).mapTokenInfo(erc20_1.address, await l1Token.symbol());
+    (hubPoolClient as SimpleMockHubPoolClient).mapTokenInfo(erc20_2.address, await l1Token.symbol());
 
     await l1Token.approve(hubPool.address, amountToLp);
     await hubPool.addLiquidity(l1Token.address, amountToLp);
@@ -204,9 +205,14 @@ describe("Relayer: Initiates slow fill requests", async function () {
     expect(deposit).to.exist;
 
     await updateAllClients();
-    await relayerInstance.checkForUnfilledDepositsAndFill();
-    expect(spyLogIncludes(spy, -2, "Requested slow fill for deposit.")).to.be.true;
-    expect(lastSpyLogIncludes(spy, "Insufficient balance to fill all deposits")).to.be.true;
+    const _txnReceipts = await relayerInstance.checkForUnfilledDepositsAndFill();
+    const txnHashes = await _txnReceipts[destinationChainId];
+    expect(txnHashes.length).to.equal(1);
+    const txn = await spokePool_1.provider.getTransaction(txnHashes[0]);
+    const { name: method } = spokePool_1.interface.parseTransaction(txn);
+    expect(method).to.equal("requestV3SlowFill");
+    expect(spyLogIncludes(spy, -5, "Insufficient balance to fill all deposits")).to.be.true;
+    expect(lastSpyLogIncludes(spy, "Requested slow fill for deposit.")).to.be.true;
 
     // Verify that the slowFill request was received by the destination SpokePoolClient.
     await Promise.all([spokePoolClient_1.update(), spokePoolClient_2.update(), hubPoolClient.update()]);
@@ -218,7 +224,10 @@ describe("Relayer: Initiates slow fill requests", async function () {
       getRelayDataHash(deposit, deposit.destinationChainId)
     );
 
-    await relayerInstance.checkForUnfilledDepositsAndFill();
+    const txnReceipts = await relayerInstance.checkForUnfilledDepositsAndFill();
+    for (const receipts of Object.values(txnReceipts)) {
+      expect((await receipts).length).to.equal(0);
+    }
     expect(lastSpyLogIncludes(spy, "Insufficient balance to fill all deposits")).to.be.true;
   });
 });

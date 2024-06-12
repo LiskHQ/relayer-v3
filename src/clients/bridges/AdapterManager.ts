@@ -1,12 +1,20 @@
 import { BigNumber, isDefined, winston, Signer, getL2TokenAddresses, TransactionResponse, assert } from "../../utils";
 import { SpokePoolClient, HubPoolClient } from "../";
-import { OptimismAdapter, ArbitrumAdapter, PolygonAdapter, BaseAdapter, ZKSyncAdapter } from "./";
+import {
+  OptimismAdapter,
+  ArbitrumAdapter,
+  PolygonAdapter,
+  BaseAdapter,
+  ZKSyncAdapter,
+  BaseChainAdapter,
+  LineaAdapter,
+  ModeAdapter,
+} from "./";
 import { InventoryConfig, OutstandingTransfers } from "../../interfaces";
-import { utils } from "@across-protocol/sdk-v2";
-import { CHAIN_IDs } from "@across-protocol/constants-v2";
-import { BaseChainAdapter } from "./op-stack/base/BaseChainAdapter";
+import { utils } from "@across-protocol/sdk";
+import { CHAIN_IDs } from "@across-protocol/constants";
 import { spokesThatHoldEthAndWeth } from "../../common/Constants";
-import { LineaAdapter } from "./LineaAdapter";
+
 export class AdapterManager {
   public adapters: { [chainId: number]: BaseAdapter } = {};
 
@@ -25,23 +33,38 @@ export class AdapterManager {
     if (!spokePoolClients) {
       return;
     }
+    const spokePoolAddresses = Object.values(spokePoolClients).map((client) => client.spokePool.address);
+
+    // The adapters are only set up to monitor EOA's and the HubPool and SpokePool address, so remove
+    // spoke pool addresses from other chains.
+    const filterMonitoredAddresses = (chainId: number) => {
+      return monitoredAddresses.filter(
+        (address) =>
+          this.hubPoolClient.hubPool.address === address ||
+          this.spokePoolClients[chainId].spokePool.address === address ||
+          !spokePoolAddresses.includes(address)
+      );
+    };
     if (this.spokePoolClients[10] !== undefined) {
-      this.adapters[10] = new OptimismAdapter(logger, spokePoolClients, monitoredAddresses);
+      this.adapters[10] = new OptimismAdapter(logger, spokePoolClients, filterMonitoredAddresses(10));
     }
     if (this.spokePoolClients[137] !== undefined) {
-      this.adapters[137] = new PolygonAdapter(logger, spokePoolClients, monitoredAddresses);
+      this.adapters[137] = new PolygonAdapter(logger, spokePoolClients, filterMonitoredAddresses(137));
     }
     if (this.spokePoolClients[42161] !== undefined) {
-      this.adapters[42161] = new ArbitrumAdapter(logger, spokePoolClients, monitoredAddresses);
+      this.adapters[42161] = new ArbitrumAdapter(logger, spokePoolClients, filterMonitoredAddresses(42161));
     }
     if (this.spokePoolClients[324] !== undefined) {
-      this.adapters[324] = new ZKSyncAdapter(logger, spokePoolClients, monitoredAddresses);
+      this.adapters[324] = new ZKSyncAdapter(logger, spokePoolClients, filterMonitoredAddresses(324));
     }
     if (this.spokePoolClients[8453] !== undefined) {
-      this.adapters[8453] = new BaseChainAdapter(logger, spokePoolClients, monitoredAddresses);
+      this.adapters[8453] = new BaseChainAdapter(logger, spokePoolClients, filterMonitoredAddresses(8453));
     }
     if (this.spokePoolClients[59144] !== undefined) {
-      this.adapters[59144] = new LineaAdapter(logger, spokePoolClients, monitoredAddresses);
+      this.adapters[59144] = new LineaAdapter(logger, spokePoolClients, filterMonitoredAddresses(59144));
+    }
+    if (this.spokePoolClients[34443] !== undefined) {
+      this.adapters[34443] = new ModeAdapter(logger, spokePoolClients, filterMonitoredAddresses(34443));
     }
 
     logger.debug({
@@ -59,32 +82,33 @@ export class AdapterManager {
     return Object.keys(this.adapters).map((chainId) => Number(chainId));
   }
 
-  async getOutstandingCrossChainTokenTransferAmount(
-    chainId: number,
-    l1Tokens: string[]
-  ): Promise<OutstandingTransfers> {
+  getOutstandingCrossChainTokenTransferAmount(chainId: number, l1Tokens: string[]): Promise<OutstandingTransfers> {
     const adapter = this.adapters[chainId];
+    // @dev The adapter should filter out tokens that are not supported by the adapter, but we do it here as well.
+    const adapterSupportedL1Tokens = l1Tokens.filter((token) =>
+      adapter.supportedTokens.includes(this.hubPoolClient.getTokenInfo(CHAIN_IDs.MAINNET, token).symbol)
+    );
     this.logger.debug({
       at: "AdapterManager",
-      message: "Getting outstandingCrossChainTransfers",
-      chainId,
-      l1Tokens,
+      message: `Getting outstandingCrossChainTransfers for ${chainId}`,
+      adapterSupportedL1Tokens,
       searchConfigs: adapter.getUpdatedSearchConfigs(),
     });
-    return await this.adapters[chainId].getOutstandingCrossChainTransfers(l1Tokens);
+    return this.adapters[chainId].getOutstandingCrossChainTransfers(adapterSupportedL1Tokens);
   }
 
-  async sendTokenCrossChain(
+  sendTokenCrossChain(
     address: string,
     chainId: number | string,
     l1Token: string,
     amount: BigNumber,
-    simMode = false
+    simMode = false,
+    l2Token?: string
   ): Promise<TransactionResponse> {
     chainId = Number(chainId); // Ensure chainId is a number before using.
     this.logger.debug({ at: "AdapterManager", message: "Sending token cross-chain", chainId, l1Token, amount });
-    const l2Token = this.l2TokenForL1Token(l1Token, Number(chainId));
-    return await this.adapters[chainId].sendTokenToTargetChain(address, l1Token, l2Token, amount, simMode);
+    l2Token ??= this.l2TokenForL1Token(l1Token, Number(chainId));
+    return this.adapters[chainId].sendTokenToTargetChain(address, l1Token, l2Token, amount, simMode);
   }
 
   // Check how much ETH is on the target chain and if it is above the threshold the wrap it to WETH. Note that this only

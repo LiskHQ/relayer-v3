@@ -1,8 +1,26 @@
-import { typeguards } from "@across-protocol/sdk-v2";
-import { BigNumber, toBNWei, assert, isDefined, readFileSync, toBN, replaceAddressCase, ethers } from "../utils";
+import { utils as ethersUtils } from "ethers";
+import { typeguards } from "@across-protocol/sdk";
+import {
+  BigNumber,
+  bnUint256Max,
+  toBNWei,
+  assert,
+  getNetworkName,
+  isDefined,
+  readFileSync,
+  toBN,
+  replaceAddressCase,
+  ethers,
+  TOKEN_SYMBOLS_MAP,
+} from "../utils";
 import { CommonConfig, ProcessEnv } from "../common";
 import * as Constants from "../common/Constants";
-import { InventoryConfig } from "../interfaces";
+import { InventoryConfig, TokenBalanceConfig, isAliasConfig } from "../interfaces/InventoryManagement";
+
+type DepositConfirmationConfig = {
+  usdThreshold: BigNumber;
+  minConfirmations: number;
+};
 
 export class RelayerConfig extends CommonConfig {
   readonly externalIndexer: boolean;
@@ -29,7 +47,7 @@ export class RelayerConfig extends CommonConfig {
   readonly slowDepositors: string[];
   // Following distances in blocks to guarantee finality on each chain.
   readonly minDepositConfirmations: {
-    [threshold: number]: { [chainId: number]: number };
+    [chainId: number]: DepositConfirmationConfig[];
   };
   // Set to false to skip querying max deposit limit from /limits Vercel API endpoint. Otherwise relayer will not
   // fill any deposit over the limit which is based on liquidReserves in the HubPool.
@@ -95,69 +113,113 @@ export class RelayerConfig extends CommonConfig {
 
     if (Object.keys(this.inventoryConfig).length > 0) {
       this.inventoryConfig = replaceAddressCase(this.inventoryConfig); // Cast any non-address case addresses.
-      this.inventoryConfig.wrapEtherThreshold = this.inventoryConfig.wrapEtherThreshold
-        ? toBNWei(this.inventoryConfig.wrapEtherThreshold)
-        : toBNWei(1); // default to keeping 2 Eth on the target chains and wrapping the rest to WETH.
-      this.inventoryConfig.wrapEtherThresholdPerChain ??= {};
-      this.inventoryConfig.wrapEtherTarget = this.inventoryConfig.wrapEtherTarget
-        ? toBNWei(this.inventoryConfig.wrapEtherTarget)
-        : this.inventoryConfig.wrapEtherThreshold; // default to wrapping ETH to threshold, same as target.
-      this.inventoryConfig.wrapEtherTargetPerChain ??= {};
+
+      const { inventoryConfig } = this;
+
+      // Default to 1 Eth on the target chains and wrapping the rest to WETH.
+      inventoryConfig.wrapEtherThreshold = toBNWei(inventoryConfig.wrapEtherThreshold ?? 1);
+
+      inventoryConfig.wrapEtherThresholdPerChain ??= {};
+      inventoryConfig.wrapEtherTarget = inventoryConfig.wrapEtherTarget
+        ? toBNWei(inventoryConfig.wrapEtherTarget)
+        : inventoryConfig.wrapEtherThreshold; // default to wrapping ETH to threshold, same as target.
+
+      inventoryConfig.wrapEtherTargetPerChain ??= {};
       assert(
-        this.inventoryConfig.wrapEtherThreshold.gte(this.inventoryConfig.wrapEtherTarget),
-        `default wrapEtherThreshold ${this.inventoryConfig.wrapEtherThreshold} must be >= default wrapEtherTarget ${this.inventoryConfig.wrapEtherTarget}`
+        inventoryConfig.wrapEtherThreshold.gte(inventoryConfig.wrapEtherTarget),
+        `default wrapEtherThreshold ${inventoryConfig.wrapEtherThreshold} must be >= default wrapEtherTarget ${inventoryConfig.wrapEtherTarget}`
       );
 
       // Validate the per chain target and thresholds for wrapping ETH:
-      Object.keys(this.inventoryConfig.wrapEtherThresholdPerChain).forEach((chainId) => {
-        if (this.inventoryConfig.wrapEtherThresholdPerChain[chainId] !== undefined) {
-          this.inventoryConfig.wrapEtherThresholdPerChain[chainId] = toBNWei(
-            this.inventoryConfig.wrapEtherThresholdPerChain[chainId]
-          );
+      const wrapThresholds = inventoryConfig.wrapEtherThresholdPerChain;
+      const wrapTargets = inventoryConfig.wrapEtherTargetPerChain;
+      Object.keys(inventoryConfig.wrapEtherThresholdPerChain).forEach((chainId) => {
+        if (wrapThresholds[chainId] !== undefined) {
+          wrapThresholds[chainId] = toBNWei(wrapThresholds[chainId]); // Promote to 18 decimals.
         }
       });
-      Object.keys(this.inventoryConfig.wrapEtherTargetPerChain).forEach((chainId) => {
-        if (this.inventoryConfig.wrapEtherTargetPerChain[chainId] !== undefined) {
-          this.inventoryConfig.wrapEtherTargetPerChain[chainId] = toBNWei(
-            this.inventoryConfig.wrapEtherTargetPerChain[chainId]
-          );
+
+      Object.keys(inventoryConfig.wrapEtherTargetPerChain).forEach((chainId) => {
+        if (wrapTargets[chainId] !== undefined) {
+          wrapTargets[chainId] = toBNWei(wrapTargets[chainId]); // Promote to 18 decimals.
+
           // Check newly set target against threshold
-          const threshold =
-            this.inventoryConfig.wrapEtherThresholdPerChain[chainId] ?? this.inventoryConfig.wrapEtherThreshold;
-          const target = this.inventoryConfig.wrapEtherTargetPerChain[chainId];
+          const threshold = wrapThresholds[chainId] ?? inventoryConfig.wrapEtherThreshold;
+          const target = wrapTargets[chainId];
           assert(
             threshold.gte(target),
-            `wrapEtherThresholdPerChain ${threshold.toString()} must be >= wrapEtherTargetPerChain ${target}`
+            `Chain ${chainId} wrapEtherThresholdPerChain ${threshold} must be >= wrapEtherTargetPerChain ${target}`
           );
         }
       });
-      Object.keys(this.inventoryConfig?.tokenConfig ?? {}).forEach((l1Token) => {
-        Object.keys(this.inventoryConfig.tokenConfig[l1Token]).forEach((chainId) => {
-          const { targetPct, thresholdPct, unwrapWethThreshold, unwrapWethTarget, targetOverageBuffer } =
-            this.inventoryConfig.tokenConfig[l1Token][chainId];
-          assert(
-            targetPct !== undefined && thresholdPct !== undefined,
-            `Bad config. Must specify targetPct, thresholdPct for ${l1Token} on ${chainId}`
-          );
-          assert(
-            toBN(thresholdPct).lte(toBN(targetPct)),
-            `Bad config. thresholdPct<=targetPct for ${l1Token} on ${chainId}`
-          );
-          this.inventoryConfig.tokenConfig[l1Token][chainId].targetPct = toBNWei(targetPct).div(100);
-          this.inventoryConfig.tokenConfig[l1Token][chainId].thresholdPct = toBNWei(thresholdPct).div(100);
-          // Default to 150% the targetPct. targetOverageBuffer does not have to be defined so that no existing configs
-          // are broken. This is a reasonable default because it allows the relayer to be a bit more flexible in
-          // holding more tokens than the targetPct, but perhaps a better default is 100%
-          this.inventoryConfig.tokenConfig[l1Token][chainId].targetOverageBuffer = toBNWei(
-            targetOverageBuffer ?? "1.5"
-          );
+
+      const parseTokenConfig = (
+        l1Token: string,
+        chainId: string,
+        rawTokenConfig: TokenBalanceConfig
+      ): TokenBalanceConfig => {
+        const { targetPct, thresholdPct, unwrapWethThreshold, unwrapWethTarget, targetOverageBuffer } = rawTokenConfig;
+        const tokenConfig: TokenBalanceConfig = { targetPct, thresholdPct, targetOverageBuffer };
+
+        assert(
+          targetPct !== undefined && thresholdPct !== undefined,
+          `Bad config. Must specify targetPct, thresholdPct for ${l1Token} on ${chainId}`
+        );
+        assert(
+          toBN(thresholdPct).lte(toBN(targetPct)),
+          `Bad config. thresholdPct<=targetPct for ${l1Token} on ${chainId}`
+        );
+        tokenConfig.targetPct = toBNWei(targetPct).div(100);
+        tokenConfig.thresholdPct = toBNWei(thresholdPct).div(100);
+
+        // Default to 150% the targetPct. targetOverageBuffer does not have to be defined so that no existing configs
+        // are broken. This is a reasonable default because it allows the relayer to be a bit more flexible in
+        // holding more tokens than the targetPct, but perhaps a better default is 100%
+        tokenConfig.targetOverageBuffer = toBNWei(targetOverageBuffer ?? "1.5");
+
+        // For WETH, also consider any unwrap target/threshold.
+        if (l1Token === TOKEN_SYMBOLS_MAP.WETH.symbol) {
           if (unwrapWethThreshold !== undefined) {
-            this.inventoryConfig.tokenConfig[l1Token][chainId].unwrapWethThreshold = toBNWei(unwrapWethThreshold);
+            tokenConfig.unwrapWethThreshold = toBNWei(unwrapWethThreshold);
           }
-          this.inventoryConfig.tokenConfig[l1Token][chainId].unwrapWethTarget = unwrapWethTarget
-            ? toBNWei(unwrapWethTarget)
-            : toBNWei(2);
-        });
+          tokenConfig.unwrapWethTarget = toBNWei(unwrapWethTarget ?? 2);
+        }
+
+        return tokenConfig;
+      };
+
+      const rawTokenConfigs = inventoryConfig?.tokenConfig ?? {};
+      const tokenConfigs = (inventoryConfig.tokenConfig = {});
+      Object.keys(rawTokenConfigs).forEach((l1Token) => {
+        // If the l1Token is a symbol, resolve the correct address.
+        const effectiveL1Token = ethersUtils.isAddress(l1Token)
+          ? l1Token
+          : TOKEN_SYMBOLS_MAP[l1Token].addresses[this.hubPoolChainId];
+        assert(effectiveL1Token !== undefined, `No token identified for ${l1Token}`);
+
+        tokenConfigs[effectiveL1Token] ??= {};
+        const hubTokenConfig = rawTokenConfigs[l1Token];
+
+        if (isAliasConfig(hubTokenConfig)) {
+          Object.keys(hubTokenConfig).forEach((symbol) => {
+            Object.keys(hubTokenConfig[symbol]).forEach((chainId) => {
+              const rawTokenConfig = hubTokenConfig[symbol][chainId];
+              const effectiveSpokeToken = TOKEN_SYMBOLS_MAP[symbol].addresses[chainId];
+
+              tokenConfigs[effectiveL1Token][effectiveSpokeToken] ??= {};
+              tokenConfigs[effectiveL1Token][effectiveSpokeToken][chainId] = parseTokenConfig(
+                l1Token,
+                chainId,
+                rawTokenConfig
+              );
+            });
+          });
+        } else {
+          Object.keys(hubTokenConfig).forEach((chainId) => {
+            const rawTokenConfig = hubTokenConfig[chainId];
+            tokenConfigs[effectiveL1Token][chainId] = parseTokenConfig(l1Token, chainId, rawTokenConfig);
+          });
+        }
       });
     }
 
@@ -174,20 +236,45 @@ export class RelayerConfig extends CommonConfig {
     this.skipRebalancing = SKIP_REBALANCING === "true";
     this.sendingSlowRelaysEnabled = SEND_SLOW_RELAYS === "true";
     this.acceptInvalidFills = ACCEPT_INVALID_FILLS === "true";
-    (this.minDepositConfirmations = MIN_DEPOSIT_CONFIRMATIONS
+
+    const minDepositConfirmations = MIN_DEPOSIT_CONFIRMATIONS
       ? JSON.parse(MIN_DEPOSIT_CONFIRMATIONS)
-      : Constants.MIN_DEPOSIT_CONFIRMATIONS),
-      Object.keys(this.minDepositConfirmations).forEach((threshold) => {
-        Object.keys(this.minDepositConfirmations[threshold]).forEach((chainId) => {
-          const nBlocks: number = this.minDepositConfirmations[threshold][chainId];
+      : Constants.MIN_DEPOSIT_CONFIRMATIONS;
+
+    // Transform deposit confirmation requirements into an array of ascending
+    // deposit confirmations, sorted by the corresponding threshold in USD.
+    this.minDepositConfirmations = {};
+    Object.keys(minDepositConfirmations)
+      .map((_threshold) => {
+        const threshold = Number(_threshold);
+        assert(!isNaN(threshold) && threshold >= 0, `Invalid deposit confirmation threshold (${_threshold})`);
+        return Number(threshold);
+      })
+      .sort((x, y) => x - y)
+      .forEach((usdThreshold) => {
+        const config = minDepositConfirmations[usdThreshold];
+
+        Object.entries(config).forEach(([chainId, _minConfirmations]) => {
+          const minConfirmations = Number(_minConfirmations);
           assert(
-            !isNaN(nBlocks) && nBlocks >= 0,
-            `Chain ${chainId} minimum deposit confirmations for "${threshold}" threshold missing or invalid (${nBlocks}).`
+            !isNaN(minConfirmations) && minConfirmations >= 0,
+            `${getNetworkName(chainId)} deposit confirmations for` +
+              ` ${usdThreshold} threshold missing or invalid (${_minConfirmations}).`
           );
+
+          this.minDepositConfirmations[chainId] ??= [];
+          this.minDepositConfirmations[chainId].push({ usdThreshold: toBNWei(usdThreshold), minConfirmations });
         });
       });
-    // Force default thresholds in MDC config.
-    this.minDepositConfirmations["default"] = Constants.DEFAULT_MIN_DEPOSIT_CONFIRMATIONS;
+
+    // Append default thresholds as a safe upper-bound.
+    Object.keys(this.minDepositConfirmations).forEach((chainId) =>
+      this.minDepositConfirmations[chainId].push({
+        usdThreshold: bnUint256Max,
+        minConfirmations: Number.MAX_SAFE_INTEGER,
+      })
+    );
+
     this.ignoreLimits = RELAYER_IGNORE_LIMITS === "true";
   }
 }

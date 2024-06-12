@@ -28,19 +28,20 @@ import {
   BigNumberish,
   TOKEN_SYMBOLS_MAP,
   getRedisCache,
+  getTokenAddressWithCCTP,
 } from "../../utils";
-import { utils } from "@across-protocol/sdk-v2";
+import { utils } from "@across-protocol/sdk";
 
 import { CONTRACT_ADDRESSES, TOKEN_APPROVALS_TO_FIRST_ZERO } from "../../common";
 import { OutstandingTransfers, SortableEvent } from "../../interfaces";
 export interface DepositEvent extends SortableEvent {
   amount: BigNumber;
-  to: string;
+  transactionHash: string;
 }
 
 interface Events {
   [address: string]: {
-    [l1Token: string]: DepositEvent[];
+    [l1Token: string]: { [l2Token: string]: DepositEvent[] };
   };
 }
 
@@ -53,11 +54,10 @@ export abstract class BaseAdapter {
 
   readonly hubChainId = BaseAdapter.HUB_CHAIN_ID;
 
-  chainId: number;
   baseL1SearchConfig: MakeOptional<EventSearchConfig, "toBlock">;
   baseL2SearchConfig: MakeOptional<EventSearchConfig, "toBlock">;
   readonly wethAddress = TOKEN_SYMBOLS_MAP.WETH.addresses[this.hubChainId];
-  readonly atomicDepositorAddress = CONTRACT_ADDRESSES[this.hubChainId].atomicDepositor.address;
+  readonly atomicDepositorAddress = CONTRACT_ADDRESSES[this.hubChainId]?.atomicDepositor.address;
 
   l1DepositInitiatedEvents: Events = {};
   l2DepositFinalizedEvents: Events = {};
@@ -66,12 +66,11 @@ export abstract class BaseAdapter {
 
   constructor(
     readonly spokePoolClients: { [chainId: number]: SpokePoolClient },
-    _chainId: number,
+    readonly chainId: number,
     readonly monitoredAddresses: string[],
     readonly logger: winston.Logger,
     readonly supportedTokens: SupportedTokenSymbol[]
   ) {
-    this.chainId = _chainId;
     this.baseL1SearchConfig = { ...this.getSearchConfig(this.hubChainId) };
     this.baseL2SearchConfig = { ...this.getSearchConfig(this.chainId) };
     this.txnClient = new TransactionClient(logger);
@@ -83,6 +82,10 @@ export abstract class BaseAdapter {
 
   getProvider(chainId: number): Provider {
     return this.spokePoolClients[chainId].spokePool.provider;
+  }
+
+  filterSupportedTokens(l1Tokens: string[]): string[] {
+    return l1Tokens.filter((l1Token) => this.isSupportedToken(l1Token));
   }
 
   // Note: this must be called after the SpokePoolClients are updated.
@@ -115,8 +118,15 @@ export abstract class BaseAdapter {
     ).getAddress()}_targetContract:${targetContract}`;
   }
 
+  resolveL2TokenAddress(l1Token: string, isNativeUsdc = false): string {
+    return getTokenAddressWithCCTP(l1Token, this.hubChainId, this.chainId, isNativeUsdc);
+  }
+
   async checkAndSendTokenApprovals(address: string, l1Tokens: string[], associatedL1Bridges: string[]): Promise<void> {
     this.log("Checking and sending token approvals", { l1Tokens, associatedL1Bridges });
+
+    assert(l1Tokens.length === associatedL1Bridges.length, "Token and bridge arrays are not the same length");
+
     const tokensToApprove: { l1Token: Contract; targetContract: string }[] = [];
     const l1TokenContracts = l1Tokens.map(
       (l1Token) => new Contract(l1Token, ERC20.abi, this.getSigner(this.hubChainId))
@@ -197,12 +207,9 @@ export abstract class BaseAdapter {
         continue;
       }
 
-      if (outstandingTransfers[monitoredAddress] === undefined) {
-        outstandingTransfers[monitoredAddress] = {};
-      }
-      if (this.l2DepositFinalizedEvents[monitoredAddress] === undefined) {
-        this.l2DepositFinalizedEvents[monitoredAddress] = {};
-      }
+      outstandingTransfers[monitoredAddress] ??= {};
+
+      this.l2DepositFinalizedEvents[monitoredAddress] ??= {};
 
       for (const l1Token of l1Tokens) {
         // Skip if there has been no deposits for this token.
@@ -211,35 +218,43 @@ export abstract class BaseAdapter {
         }
 
         // It's okay to not have any finalization events. In that case, all deposits are outstanding.
-        if (this.l2DepositFinalizedEvents[monitoredAddress][l1Token] === undefined) {
-          this.l2DepositFinalizedEvents[monitoredAddress][l1Token] = [];
-        }
-        const l2FinalizationSet = this.l2DepositFinalizedEvents[monitoredAddress][l1Token];
+        this.l2DepositFinalizedEvents[monitoredAddress][l1Token] ??= {};
 
-        // Match deposits and finalizations by amount. We're only doing a limited lookback of events so collisions
-        // should be unlikely.
-        const finalizedAmounts = l2FinalizationSet.map((finalization) => finalization.amount.toString());
-        const pendingDeposits = this.l1DepositInitiatedEvents[monitoredAddress][l1Token].filter((deposit) => {
-          // Remove the first match. This handles scenarios where are collisions by amount.
-          const index = finalizedAmounts.indexOf(deposit.amount.toString());
-          if (index > -1) {
-            finalizedAmounts.splice(index, 1);
-            return false;
+        // We want to iterate over the deposit events that have been initiated. We'll then match them with the
+        // finalization events to determine which deposits are still outstanding.
+        for (const l2Token of Object.keys(this.l1DepositInitiatedEvents[monitoredAddress][l1Token])) {
+          this.l2DepositFinalizedEvents[monitoredAddress][l1Token][l2Token] ??= [];
+          const l2FinalizationSet = this.l2DepositFinalizedEvents[monitoredAddress][l1Token][l2Token];
+
+          // Match deposits and finalizations by amount. We're only doing a limited lookback of events so collisions
+          // should be unlikely.
+          const finalizedAmounts = l2FinalizationSet.map((finalization) => finalization.amount.toString());
+          const pendingDeposits = this.l1DepositInitiatedEvents[monitoredAddress][l1Token][l2Token].filter(
+            (deposit) => {
+              // Remove the first match. This handles scenarios where are collisions by amount.
+              const index = finalizedAmounts.indexOf(deposit.amount.toString());
+              if (index > -1) {
+                finalizedAmounts.splice(index, 1);
+                return false;
+              }
+              return true;
+            }
+          );
+
+          // Short circuit early if there are no pending deposits.
+          if (pendingDeposits.length === 0) {
+            continue;
           }
-          return true;
-        });
 
-        // Short circuit early if there are no pending deposits.
-        if (pendingDeposits.length === 0) {
-          continue;
+          outstandingTransfers[monitoredAddress][l1Token] ??= {};
+
+          const totalAmount = pendingDeposits.reduce((acc, curr) => acc.add(curr.amount), bnZero);
+          const depositTxHashes = pendingDeposits.map((deposit) => deposit.transactionHash);
+          outstandingTransfers[monitoredAddress][l1Token][l2Token] = {
+            totalAmount,
+            depositTxHashes,
+          };
         }
-
-        const totalAmount = pendingDeposits.reduce((acc, curr) => acc.add(curr.amount), bnZero);
-        const depositTxHashes = pendingDeposits.map((deposit) => deposit.transactionHash);
-        outstandingTransfers[monitoredAddress][l1Token] = {
-          totalAmount,
-          depositTxHashes,
-        };
       }
     }
 
@@ -263,6 +278,14 @@ export abstract class BaseAdapter {
     return compareAddressesSimple(l1Token, this.wethAddress);
   }
 
+  isHubChainContract(address: string): Promise<Boolean> {
+    return utils.isContractDeployedToAddress(address, this.getProvider(this.hubChainId));
+  }
+
+  isL2ChainContract(address: string): Promise<Boolean> {
+    return utils.isContractDeployedToAddress(address, this.getProvider(this.chainId));
+  }
+
   /**
    * Get L1 Atomic WETH depositor contract
    * @returns L1 Atomic WETH depositor contract
@@ -274,6 +297,14 @@ export abstract class BaseAdapter {
       CONTRACT_ADDRESSES[hubChainId].atomicDepositor.abi,
       this.getSigner(hubChainId)
     );
+  }
+
+  getHubPool(): Contract {
+    const hubPoolContractData = CONTRACT_ADDRESSES[this.hubChainId]?.hubPool;
+    if (!hubPoolContractData) {
+      throw new Error(`hubPoolContractData not found for chain ${this.hubChainId}`);
+    }
+    return new Contract(hubPoolContractData.address, hubPoolContractData.abi, this.getSigner(this.hubChainId));
   }
 
   /**
@@ -334,7 +365,6 @@ export abstract class BaseAdapter {
         at: `${this.getName()}#_sendTokenToTargetChain`,
         message: "Simulation result",
         succeed,
-        ...txnRequest,
       });
       return { hash: ZERO_ADDRESS } as TransactionResponse;
     }

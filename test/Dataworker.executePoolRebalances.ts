@@ -1,5 +1,5 @@
 import { HubPoolClient, MultiCallerClient, SpokePoolClient } from "../src/clients";
-import { bnZero, MAX_UINT_VAL, toBNWei } from "../src/utils";
+import { bnZero, getCurrentTime, MAX_UINT_VAL, toBNWei } from "../src/utils";
 import {
   MAX_L1_TOKENS_PER_POOL_REBALANCE_LEAF,
   MAX_REFUNDS_PER_RELAYER_REFUND_LEAF,
@@ -90,7 +90,7 @@ describe("Dataworker: Execute pool rebalances", async function () {
 
     // Execute queue and check that root bundle is pending:
     await l1Token_1.approve(hubPool.address, MAX_UINT_VAL);
-    await multiCallerClient.executeTransactionQueue();
+    await multiCallerClient.executeTxnQueues();
 
     // Advance time and execute leaves:
     await hubPool.setCurrentTime(Number(await hubPool.getCurrentTime()) + Number(await hubPool.liveness()) + 1);
@@ -105,7 +105,7 @@ describe("Dataworker: Execute pool rebalances", async function () {
     // arbitrum gas fees, and 1 to update the exchangeRate to execute the destination chain leaf.
     // console.log(spy.getCall(-1))
     expect(multiCallerClient.transactionCount()).to.equal(4);
-    await multiCallerClient.executeTransactionQueue();
+    await multiCallerClient.executeTxnQueues();
 
     // TEST 3:
     // Submit another root bundle proposal and check bundle block range. There should be no leaves in the new range
@@ -129,6 +129,14 @@ describe("Dataworker: Execute pool rebalances", async function () {
       mockHubPoolClient = new MockHubPoolClient(hubPoolClient.logger, fakeHubPool, hubPoolClient.configStoreClient);
       mockHubPoolClient.setTokenInfoToReturn({ address: l1Token_1.address, decimals: 18, symbol: "TEST" });
       dataworkerInstance.clients.hubPoolClient = mockHubPoolClient;
+
+      // Sub in a dummy root bundle proposal for use in HubPoolClient update.
+      const zero = "0x0000000000000000000000000000000000000000000000000000000000000000";
+      fakeHubPool.multicall.returns([
+        hubPool.interface.encodeFunctionResult("getCurrentTime", [getCurrentTime().toString()]),
+        hubPool.interface.encodeFunctionResult("rootBundleProposal", [zero, zero, zero, 0, ZERO_ADDRESS, 0, 0]),
+      ]);
+
       await updateAllClients();
     });
     describe("_updateExchangeRatesBeforeExecutingHubChainLeaves", function () {
