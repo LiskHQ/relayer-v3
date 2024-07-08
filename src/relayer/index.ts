@@ -12,6 +12,7 @@ import {
 import { Relayer } from "./Relayer";
 import { RelayerConfig } from "./RelayerConfig";
 import { constructRelayerClients, updateRelayerClients } from "./RelayerClientHelper";
+import { runAPIServer } from "../api";
 config();
 let logger: winston.Logger;
 
@@ -35,9 +36,12 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
   });
 
   logger[startupLogLevel(config)]({ at: "Relayer#run", message: "Relayer started 🏃‍♂️", config, relayerRun });
+
+  logger.info({ at: "Relayer#run", message: "Starting relayer API server." });
+  await runAPIServer(logger);
+
   const relayerClients = await constructRelayerClients(logger, config, baseSigner);
   const relayer = new Relayer(await baseSigner.getAddress(), logger, relayerClients, config);
-
   let run = 1;
   let txnReceipts: { [chainId: number]: Promise<string[]> };
   try {
