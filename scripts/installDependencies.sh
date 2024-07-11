@@ -4,6 +4,8 @@ sudo apt install nodejs
 sudo apt install npm
 # Install pm2
 sudo npm install pm2@latest -g
+# Install yarn
+npm install --global yarn
 # Install application
 yarn install
 yarn build
