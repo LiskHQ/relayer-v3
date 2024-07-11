@@ -9,5 +9,5 @@ export REDIS_URL="redis://127.0.0.1:6379"
 export RELAYER_ORIGIN_CHAINS=[11155111,4202]
 export RELAYER_DESTINATION_CHAINS=[11155111,4202]
 export HUB_CHAIN_ID=11155111
-pm2 stop all # Stop any running app
-pm2 start "MNEMONIC='job hedgehog wing decorate cup club hunt horn rude cancel bridge carry frog toss ugly' SEND_RELAYS=false yarn relay --wallet mnemonic"
+sudo -E pm2 stop all # Stop any running app
+sudo -E pm2 start "MNEMONIC='job hedgehog wing decorate cup club hunt horn rude cancel bridge carry frog toss ugly' SEND_RELAYS=false yarn relay --wallet mnemonic"
