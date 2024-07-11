@@ -7,8 +7,8 @@ echo "Current DIR: $PWD"
 secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:testnet/lisk-across-relayer/aws-WBAwo1
 RELAYER_CONFIG=`aws --region eu-west-3 secretsmanager get-secret-value --secret-id ${secret_id} | jq --raw-output .SecretString | jq -r .`
 
-AWS_CONFIG=`echo $RELAYER_CONFIG | jq -r ."AWS_CONFIG"`
-echo "AWS_CONFIG=$AWS_CONFIG" >> .env
+AWSKMS_CONFIG=`echo $RELAYER_CONFIG | jq -r ."AWSKMS_CONFIG"`
+echo "AWSKMS_CONFIG=$AWSKMS_CONFIG" >> .env
 
 AWS_S3_STORAGE_CONFIG=`echo $RELAYER_CONFIG | jq -r ."AWS_S3_STORAGE_CONFIG"`
 echo "AWS_S3_STORAGE_CONFIG=$AWS_S3_STORAGE_CONFIG" >> ${app_dir}/.env
