@@ -3,6 +3,9 @@ app_dir=/home/ubuntu/lisk-across-relayer
 cd $app_dir
 echo "Current DIR: $PWD"
 
+# Remove previous .env var if any
+rm -vf .env
+
 # Setting env var from secrets
 secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:testnet/lisk-across-relayer/aws-WBAwo1
 RELAYER_CONFIG=`aws --region eu-west-3 secretsmanager get-secret-value --secret-id ${secret_id} | jq --raw-output .SecretString | jq -r .`
@@ -25,6 +28,7 @@ echo "RPC_PROVIDER_DRPC_4202=$RPC_PROVIDER_DRPC_4202" >> ${app_dir}/.env
 RPC_PROVIDER_GELATO_4202=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDER_GELATO_4202"`
 echo "RPC_PROVIDER_GELATO_4202=$RPC_PROVIDER_GELATO_4202" >> ${app_dir}/.env
 
+echo "All env vars from secrets are set."
 
 # Simulation mode ON
 echo "SEND_RELAYS=false" >> ${app_dir}/.env
@@ -44,6 +48,8 @@ echo "REDIS_URL='redis://127.0.0.1:6379'" >> ${app_dir}/.env
 # Supported token settings
 echo "RELAYER_TOKENS='["0x16B840bA01e2b05fc2268eAf6d18892a11EC29D6", "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"]'"  >> ${app_dir}/.env
 echo "MIN_DEPOSIT_CONFIRMATIONS='{ "1000000": { "919": 1, "4202": 1, "80002": 1, "84532": 1, "421614": 1, "11155111": 1, "11155420": 1 } }'" >> ${app_dir}/.env
+
+echo "All env vars are set."
 
 sudo -E pm2 stop all # Stop any running app
 sudo -E pm2 start "node ${app_dir}/dist/index.js --relayer --wallet awskms --keys "relayerKey""
