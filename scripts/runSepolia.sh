@@ -1,2 +1,2 @@
 #!/bin/bash
-pm2 start pm2.config.js --only lisk-across-relayer-testnet
+pm2 start pm2.config.js --only testnet-across-relayer-simulated
