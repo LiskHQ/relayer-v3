@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/lisk-across-relayer
+hooks:
+  BeforeInstall:
+    - location: scripts/installDependencies.sh
+  ApplicationStart:
+    - location: scripts/runSepolia.sh
