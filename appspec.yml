@@ -6,10 +6,7 @@ files:
 hooks:
   BeforeInstall:
     - location: scripts/installDependencies.sh
-    - runas: root
   AfterInstall:
     - location: scripts/installApplication.sh
-    - runas: root
   ApplicationStart:
     - location: scripts/runSepolia.sh
-    - runas: root
