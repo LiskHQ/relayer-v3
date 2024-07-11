@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/lisk-across-relayer
+    destination: /home/ubuntu/lisk-across-relayer
 hooks:
   BeforeInstall:
     - location: scripts/installDependencies.sh
