@@ -50,5 +50,5 @@ echo "All env vars are set."
 
 # PM2 runs on the fall back path when using CodeDeploy agent and we can run with the given fall back path
 export PM2_HOME=/etc/.pm2
-sudo -E pm2 stop all # Stop any running app
+sudo -E pm2 delete all # Delete any running app
 sudo -E pm2 start "node ${app_dir}/dist/index.js --relayer --wallet awskms --keys "relayerKey""
