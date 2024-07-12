@@ -2,8 +2,8 @@ name: "Branch"
 
 on:
   push:
-    branches: [ "master" ]
-   
+    branches: ["master"]
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -26,10 +26,10 @@ jobs:
       - run: yarn format
       - name: Check format
         run: |
-            if [ -z "$(git status --untracked-files=no --porcelain)" ]; then
-              echo "All files formatted"
-            else
-              echo "Running format is required"
-              exit 1
-            fi
+          if [ -z "$(git status --untracked-files=no --porcelain)" ]; then
+            echo "All files formatted"
+          else
+            echo "Running format is required"
+            exit 1
+          fi
       - run: yarn test
