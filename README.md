@@ -37,8 +37,13 @@ REDIS_URL=redis://localhost:6379
 ## Installation
 
 ```sh
+# Clone repo
+git clone https://github.com/LiskHQ/across-relayer.git
+```
+
+```sh
 # install dependencies
-cd relayer
+cd across-relayer
 yarn install
 
 # build relayer bot
