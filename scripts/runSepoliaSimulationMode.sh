@@ -31,7 +31,7 @@ echo "RPC_PROVIDER_GELATO_4202=$RPC_PROVIDER_GELATO_4202" >> ${app_dir}/.env
 echo "All env vars from secrets are set."
 
 # Simulation mode ON
-echo "SEND_RELAYS=true" >> ${app_dir}/.env
+echo "SEND_RELAYS=false" >> ${app_dir}/.env
 # RPC provider configuration
 echo "RPC_PROVIDERS=TENDERLY,GELATO,DRPC" >> ${app_dir}/.env
 echo "RPC_PROVIDERS_11155111=TENDERLY,DRPC" >> ${app_dir}/.env
