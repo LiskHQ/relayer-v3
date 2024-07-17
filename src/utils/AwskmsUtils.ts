@@ -8,8 +8,6 @@ export interface KeyConfig {
   accessKeyId?: string;
   secretAccessKey?: string;
   region: string;
-  bucketName: string;
-  fileKey: string;
 }
 
 export interface AwskmsConfig {
