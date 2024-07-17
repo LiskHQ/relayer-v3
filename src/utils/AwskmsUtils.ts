@@ -23,7 +23,10 @@ interface AwsS3StorageConfig {
   key: string;
 }
 
-interface AWSClientConfig { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } }
+interface AWSClientConfig {
+  region: string;
+  credentials?: { accessKeyId: string; secretAccessKey: string };
+}
 
 const { AWS_S3_STORAGE_CONFIG } = process.env;
 const storageConfig: AwsS3StorageConfig = AWS_S3_STORAGE_CONFIG ? JSON.parse(AWS_S3_STORAGE_CONFIG) : undefined;
