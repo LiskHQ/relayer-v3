@@ -1,11 +1,12 @@
+/* eslint-disable prettier/prettier */
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import * as KMS from "@aws-sdk/client-kms";
 
 import fs from "fs";
 export interface KeyConfig {
   keyID: string;
-  accessKeyId: string;
-  secretAccessKey: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
   region: string;
   bucketName: string;
   fileKey: string;
@@ -22,6 +23,11 @@ interface AwsS3StorageConfig {
   key: string;
 }
 
+interface AWSClientConfig {
+  region: string;
+  credentials?: { accessKeyId: string; secretAccessKey: string };
+}
+
 const { AWS_S3_STORAGE_CONFIG } = process.env;
 const storageConfig: AwsS3StorageConfig = AWS_S3_STORAGE_CONFIG ? JSON.parse(AWS_S3_STORAGE_CONFIG) : undefined;
 
@@ -30,13 +36,18 @@ async function downloadEncryptedKey(config: KeyConfig): Promise<Uint8Array | und
     Bucket: storageConfig.bucket,
     Key: storageConfig.key,
   });
-  const client = new S3Client({
+
+  const S3ClientConfig: AWSClientConfig = {
     region: config.region,
-    credentials: {
+  };
+
+  if (config.accessKeyId !== "" && config.secretAccessKey !== "") {
+    S3ClientConfig.credentials = {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
-    },
-  });
+    };
+  }
+  const client = new S3Client(S3ClientConfig);
   try {
     const response = await client.send(command);
     // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
@@ -81,13 +92,16 @@ export async function retrieveAwskmsKeys(awskmsConfigs: KeyConfig[]): Promise<st
       };
       const decryptCommand = new KMS.DecryptCommand(input);
 
-      const client = new KMS.KMS({
+      const KMSClientConfig: AWSClientConfig = {
         region: config.region,
-        credentials: {
+      };
+      if (config.accessKeyId !== "" && config.secretAccessKey !== "") {
+        KMSClientConfig.credentials = {
           accessKeyId: config.accessKeyId,
           secretAccessKey: config.secretAccessKey,
-        },
-      });
+        };
+      }
+      const client = new KMS.KMS(KMSClientConfig);
 
       const data = await client.send(decryptCommand);
       if (!(data.Plaintext instanceof Uint8Array)) {
