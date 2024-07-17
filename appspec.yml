@@ -9,4 +9,4 @@ hooks:
   AfterInstall:
     - location: scripts/installApplication.sh
   ApplicationStart:
-    - location: scripts/runSepolia.sh
+    - location: scripts/runMainnet.sh
