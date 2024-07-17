@@ -39,7 +39,7 @@ async function downloadEncryptedKey(config: KeyConfig): Promise<Uint8Array | und
     region: config.region,
   };
 
-  if (config.accessKeyId !== "" && config.secretAccessKey !== "") {
+  if (config.accessKeyId && config.accessKeyId !== "" && config.secretAccessKey && config.secretAccessKey !== "") {
     S3ClientConfig.credentials = {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
@@ -93,7 +93,7 @@ export async function retrieveAwskmsKeys(awskmsConfigs: KeyConfig[]): Promise<st
       const KMSClientConfig: AWSClientConfig = {
         region: config.region,
       };
-      if (config.accessKeyId !== "" && config.secretAccessKey !== "") {
+      if (config.accessKeyId && config.accessKeyId !== "" && config.secretAccessKey && config.secretAccessKey !== "") {
         KMSClientConfig.credentials = {
           accessKeyId: config.accessKeyId,
           secretAccessKey: config.secretAccessKey,
