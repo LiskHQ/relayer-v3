@@ -106,7 +106,7 @@ export async function retrieveAwskmsKeys(awskmsConfigs: KeyConfig[]): Promise<st
         throw new Error("result.plaintext wrong type");
       }
 
-      return "0x" + Buffer.from(data.Plaintext).toString().trim();
+      return "0x" + Buffer.from(data.Plaintext).toString("base64").trim();
     })
   );
 }
