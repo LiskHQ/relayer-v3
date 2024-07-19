@@ -40,7 +40,7 @@ echo "RPC_PROVIDERS_1135=GELATO,DRPC" >> ${app_dir}/.env
 # Mainnet settings
 echo "RELAYER_ORIGIN_CHAINS=[1,1135]" >> ${app_dir}/.env
 echo "RELAYER_DESTINATION_CHAINS=[1,1135]" >> ${app_dir}/.env
-echo "MIN_RELAYER_FEE_PCT=-5" >> ${app_dir}/.env
+echo "MIN_RELAYER_FEE_PCT=0.0001" >> ${app_dir}/.env
 
 # Redis settings
 echo "REDIS_URL='redis://127.0.0.1:6379'" >> ${app_dir}/.env
