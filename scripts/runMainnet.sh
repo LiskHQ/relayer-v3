@@ -10,12 +10,14 @@ rm -vf .env
 secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:mainnet/lisk-across-relayer/aws-CSi7ka
 RELAYER_CONFIG=`aws --region eu-west-3 secretsmanager get-secret-value --secret-id ${secret_id} | jq --raw-output .SecretString | jq -r .`
 
+# AWS config
 AWSKMS_CONFIG=`echo $RELAYER_CONFIG | jq -r ."AWSKMS_CONFIG"`
 echo "AWSKMS_CONFIG=$AWSKMS_CONFIG" >> .env
 
 AWS_S3_STORAGE_CONFIG=`echo $RELAYER_CONFIG | jq -r ."AWS_S3_STORAGE_CONFIG"`
 echo "AWS_S3_STORAGE_CONFIG=$AWS_S3_STORAGE_CONFIG" >> ${app_dir}/.env
 
+# RPC poviders url
 RPC_PROVIDER_DRPC_1=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDER_DRPC_1"`
 echo "RPC_PROVIDER_DRPC_1=$RPC_PROVIDER_DRPC_1" >> ${app_dir}/.env
 
@@ -28,27 +30,41 @@ echo "RPC_PROVIDER_DRPC_1135=$RPC_PROVIDER_DRPC_1135" >> ${app_dir}/.env
 RPC_PROVIDER_GELATO_1135=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDER_GELATO_1135"`
 echo "RPC_PROVIDER_GELATO_1135=$RPC_PROVIDER_GELATO_1135" >> ${app_dir}/.env
 
-echo "All env vars from secrets are set."
-
 # Simulation mode OFF
-echo "SEND_RELAYS=true" >> ${app_dir}/.env
+SEND_RELAYS=`echo $RELAYER_CONFIG | jq -r ."SEND_RELAYS"`
+echo "SEND_RELAYS=$SEND_RELAYS" >> ${app_dir}/.env
+
 # RPC provider configuration
-echo "RPC_PROVIDERS=TENDERLY,GELATO,DRPC" >> ${app_dir}/.env
-echo "RPC_PROVIDERS_1=TENDERLY,DRPC" >> ${app_dir}/.env
-echo "RPC_PROVIDERS_1135=GELATO,DRPC" >> ${app_dir}/.env
+RPC_PROVIDERS=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDERS"`
+echo "RPC_PROVIDERS=$RPC_PROVIDERS" >> ${app_dir}/.env
+
+RPC_PROVIDERS_1=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDERS_1"`
+echo "RPC_PROVIDERS_1=$RPC_PROVIDERS_1" >> ${app_dir}/.env
+
+RPC_PROVIDERS_1135=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDERS_1135"`
+echo "RPC_PROVIDERS_1135=$RPC_PROVIDERS_1135" >> ${app_dir}/.env
 
 # Mainnet settings
-echo "RELAYER_ORIGIN_CHAINS=[1,1135]" >> ${app_dir}/.env
-echo "RELAYER_DESTINATION_CHAINS=[1,1135]" >> ${app_dir}/.env
-echo "MIN_RELAYER_FEE_PCT=-5" >> ${app_dir}/.env
+RELAYER_ORIGIN_CHAINS=`echo $RELAYER_CONFIG | jq -r ."RELAYER_ORIGIN_CHAINS"`
+echo "RELAYER_ORIGIN_CHAINS=$RELAYER_ORIGIN_CHAINS" >> ${app_dir}/.env
+
+RELAYER_DESTINATION_CHAINS=`echo $RELAYER_CONFIG | jq -r ."RELAYER_DESTINATION_CHAINS"`
+echo "RELAYER_DESTINATION_CHAINS=$RELAYER_DESTINATION_CHAINS" >> ${app_dir}/.env
+
+MIN_RELAYER_FEE_PCT=`echo $RELAYER_CONFIG | jq -r ."MIN_RELAYER_FEE_PCT"`
+echo "MIN_RELAYER_FEE_PCT=$MIN_RELAYER_FEE_PCT" >> ${app_dir}/.env
 
 # Redis settings
-echo "REDIS_URL='redis://127.0.0.1:6379'" >> ${app_dir}/.env
+REDIS_URL=`echo $RELAYER_CONFIG | jq -r ."REDIS_URL"`
+echo "REDIS_URL=$REDIS_URL" >> ${app_dir}/.env
 # Supported token settings
-echo RELAYER_TOKENS=\'[\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\", \"0x6033F7f88332B8db6ad452B7C6D5bB643990aE3f\", \"0xdAC17F958D2ee523a2206206994597C13D831ec7\"]\'  >> ${app_dir}/.env
-echo MIN_DEPOSIT_CONFIRMATIONS=\'{\"5000\": { \"1\": 5, \"1135\": 10 }, \"2000\": { \"1\": 4, \"1135\": 10 }, \"100\": { \"1\": 3, \"1135\": 10 } }\' >> ${app_dir}/.env
+RELAYER_TOKENS=`echo $RELAYER_CONFIG | jq -r ."RELAYER_TOKENS"`
+echo "RELAYER_TOKENS=$RELAYER_TOKENS" >> ${app_dir}/.env
 
-echo "All env vars are set."
+MIN_DEPOSIT_CONFIRMATIONS=`echo $RELAYER_CONFIG | jq -r ."MIN_DEPOSIT_CONFIRMATIONS"`
+echo "MIN_DEPOSIT_CONFIRMATIONS=$MIN_DEPOSIT_CONFIRMATIONS" >> ${app_dir}/.env
+
+echo "All env vars from secrets are set."
 
 # PM2 runs on the fall back path when using CodeDeploy agent and we can run with the given fall back path
 export PM2_HOME=/etc/.pm2
