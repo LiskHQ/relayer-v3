@@ -28,6 +28,9 @@ echo "RPC_PROVIDER_DRPC_1135=$RPC_PROVIDER_DRPC_1135" >> ${app_dir}/.env
 RPC_PROVIDER_GELATO_1135=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDER_GELATO_1135"`
 echo "RPC_PROVIDER_GELATO_1135=$RPC_PROVIDER_GELATO_1135" >> ${app_dir}/.env
 
+SLACK_CONFIG=`echo $RELAYER_CONFIG | jq -r ."SLACK_CONFIG"`
+echo "SLACK_CONFIG=$SLACK_CONFIG" >> ${app_dir}/.env
+
 echo "All env vars from secrets are set."
 
 # Simulation mode OFF
