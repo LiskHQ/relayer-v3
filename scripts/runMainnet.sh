@@ -35,6 +35,7 @@ echo "All env vars from secrets are set."
 
 # Simulation mode OFF
 echo "SEND_RELAYS=true" >> ${app_dir}/.env
+
 # RPC provider configuration
 echo "RPC_PROVIDERS=TENDERLY,GELATO,DRPC" >> ${app_dir}/.env
 echo "RPC_PROVIDERS_1=TENDERLY,DRPC" >> ${app_dir}/.env
@@ -45,8 +46,12 @@ echo "RELAYER_ORIGIN_CHAINS=[1,1135]" >> ${app_dir}/.env
 echo "RELAYER_DESTINATION_CHAINS=[1,1135]" >> ${app_dir}/.env
 echo "MIN_RELAYER_FEE_PCT=0.0001" >> ${app_dir}/.env
 
+# Fee settings
+echo "PRIORITY_FEE_SCALER_1=0.8"  >> ${app_dir}/.env
+
 # Redis settings
 echo "REDIS_URL='redis://127.0.0.1:6379'" >> ${app_dir}/.env
+
 # Supported token settings
 echo RELAYER_TOKENS=\'[\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\", \"0x6033F7f88332B8db6ad452B7C6D5bB643990aE3f\", \"0xdAC17F958D2ee523a2206206994597C13D831ec7\"]\'  >> ${app_dir}/.env
 echo MIN_DEPOSIT_CONFIRMATIONS=\'{\"5000\": { \"1\": 5, \"1135\": 10 }, \"2000\": { \"1\": 4, \"1135\": 10 }, \"100\": { \"1\": 3, \"1135\": 10 } }\' >> ${app_dir}/.env
