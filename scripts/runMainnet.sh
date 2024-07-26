@@ -37,8 +37,8 @@ echo "All env vars from secrets are set."
 echo "SEND_RELAYS=true" >> ${app_dir}/.env
 
 # RPC provider configuration
-echo "RPC_PROVIDERS=TENDERLY,GELATO,DRPC" >> ${app_dir}/.env
-echo "RPC_PROVIDERS_1=TENDERLY,DRPC" >> ${app_dir}/.env
+echo "RPC_PROVIDERS=DRPC,GELATO,TENDERLY" >> ${app_dir}/.env
+echo "RPC_PROVIDERS_1=DRPC,TENDERLY" >> ${app_dir}/.env
 echo "RPC_PROVIDERS_1135=GELATO,DRPC" >> ${app_dir}/.env
 
 # Mainnet settings
