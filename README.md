@@ -63,6 +63,9 @@ All files within this repository are licensed under the [GNU Affero General Publ
 ## Contributing
 
 ```sh
+# Run relayer with voidsigner feature to test configs locally
+yarn relay --wallet void --address <ADDRESS>
+
 # run test suite
 yarn test
 
