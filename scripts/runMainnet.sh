@@ -48,6 +48,7 @@ echo "MIN_RELAYER_FEE_PCT=0.0001" >> ${app_dir}/.env
 
 # Fee settings
 echo "PRIORITY_FEE_SCALER_1=0.8"  >> ${app_dir}/.env
+echo "RELAYER_GAS_PADDING=0"  >> ${app_dir}/.env
 
 # Redis settings
 echo "REDIS_URL='redis://127.0.0.1:6379'" >> ${app_dir}/.env
