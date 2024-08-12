@@ -16,12 +16,13 @@ nvm_path=~/.nvm/nvm.sh
 
 install_node_version() {
     # Check if NVM is installed
-    if command -v . $nvm_path &> /dev/null
+    if [ -s "$nvm_path" ];
     then
         echo "NVM is already installed."
     else
         echo "Installing NVM..."
         install_nvm
+        source nvm_path
     fi
 
     node_command=`command -v node`
@@ -32,8 +33,8 @@ install_node_version() {
         echo "Correct node version is already installed."
     else
         echo "Node version $node_version is not installed. Installing..."
-        . $nvm_path nvm install $node_version
-        . $nvm_path nvm use $node_version
+        nvm install $node_version
+        nvm use $node_version
     fi
 }
 
