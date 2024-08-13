@@ -1,7 +1,7 @@
 # Install nodejs dependencies
-sudo apt update
+apt update
 echo "Current DIR: $PWD"
-# Script to install Node.js using NVM on Ubuntu without sudo
+# Script to install Node.js using NVM on Ubuntu
 
 node_version=v20
 # Function to install NVM
@@ -42,11 +42,9 @@ install_node_version
 
 echo "Node.js version $node_version has been installed."
 
-sudo apt install npm
-echo "***Installed npm***"
 # Install yarn
-sudo npm install --global yarn
+npm install --global yarn
 echo "***Installed yarn***"
 # Install pm2
-sudo npm install --global pm2@latest
+npm install --global pm2@latest
 echo "***Installed pm2***"
