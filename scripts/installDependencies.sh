@@ -3,7 +3,9 @@ apt update
 echo "Current DIR: $PWD"
 # Script to install Node.js using NVM on Ubuntu
 
-node_version=v20
+# Read node version from .nvmrc file
+node_version=$(cat .nvmrc | tr -d "\n")
+
 # Function to install NVM
 install_nvm() {
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -19,23 +21,16 @@ install_node_version() {
     if [ -s "$nvm_path" ];
     then
         echo "NVM is already installed."
+        source $nvm_path
     else
         echo "Installing NVM..."
         install_nvm
-        source nvm_path
+        source $nvm_path
     fi
-
-    node_command=`command -v node`
-    current_node_version=`node -v |  awk -F\. '{print $1}'`
-    # Check if correct version of node is present
-    if [[ "$node_command" ]] && [[ "$node_version" == "$current_node_version" ]];
-    then
-        echo "Correct node version is already installed."
-    else
-        echo "Node version $node_version is not installed. Installing..."
-        nvm install $node_version
-        nvm use $node_version
-    fi
+    
+    echo "Installing Node version $node_version..."
+    nvm install $node_version
+    nvm use $node_version
 }
 
 install_node_version
