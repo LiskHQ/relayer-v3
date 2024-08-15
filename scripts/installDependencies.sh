@@ -1,52 +1,40 @@
 # Install nodejs dependencies
-sudo apt update
 echo "Current DIR: $PWD"
-# Script to install Node.js using NVM on Ubuntu without sudo
+# Script to install Node.js using NVM on Ubuntu
 
-node_version=v20
+# Read node version from .nvmrc file
+node_version=$(cat .nvmrc | tr -d "\n")
+
 # Function to install NVM
 install_nvm() {
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
 }
-
-# nvm command is a shell function declared in ~/.nvm/nvm.sh
-nvm_path=~/.nvm/nvm.sh
 
 install_node_version() {
     # Check if NVM is installed
-    if [ -s "$nvm_path" ];
+    export NVM_DIR="$HOME/.nvm"
+    
+    if [ -s "$NVM_DIR/nvm.sh" ];
     then
         echo "NVM is already installed."
     else
         echo "Installing NVM..."
         install_nvm
-        source nvm_path
     fi
 
-    node_command=`command -v node`
-    current_node_version=`node -v |  awk -F\. '{print $1}'`
-    # Check if correct version of node is present
-    if [[ "$node_command" ]] && [[ "$node_version" == "$current_node_version" ]];
-    then
-        echo "Correct node version is already installed."
-    else
-        echo "Node version $node_version is not installed. Installing..."
-        nvm install $node_version
-        nvm use $node_version
-    fi
+    # Setting up environment for NVM    
+    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    
+    echo "Installing Node version $node_version..."
+    nvm install $node_version
 }
 
 install_node_version
 
 echo "Node.js version $node_version has been installed."
 
-sudo apt install npm
-echo "***Installed npm***"
 # Install yarn
-sudo npm install --global yarn
-echo "***Installed yarn***"
+npm install --global yarn
 # Install pm2
-sudo npm install --global pm2@latest
-echo "***Installed pm2***"
+npm install --global pm2@latest
