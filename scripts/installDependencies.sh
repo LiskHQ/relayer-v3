@@ -29,9 +29,6 @@ install_nvm() {
         echo "export NVM_DIR=\"\$HOME/.nvm\"" >> "$HOME/.bashrc"
         echo "[ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"  # This loads nvm" >> "$HOME/.bashrc"
     fi
-
-    # Ensure NVM is now available in PATH
-    source "$HOME/.bashrc"
 }
 
 install_node_version() {
@@ -43,6 +40,9 @@ install_node_version() {
         echo "Installing NVM..."
         install_nvm
     fi
+
+    # Ensure NVM is now available in PATH
+    source "$HOME/.bashrc"
 
     echo "Installing Node version $node_version..."
     nvm install $node_version
