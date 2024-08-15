@@ -36,6 +36,7 @@ install_node_version() {
 
     echo "Installing Node version $node_version..."
     nvm install $node_version
+    nvm alias default $node_version
 }
 
 install_node_version
