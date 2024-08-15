@@ -16,12 +16,25 @@ fi
 # Function to install NVM
 install_nvm() {
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+
+    # Add NVM load commands to .bashrc
+    if [ ! -f "$HOME/.bashrc" ];
+    then
+        touch $HOME/.bashrc
+    fi
+    if [ $(grep NVM_DIR "$HOME/.bashrc" | wc -l) -ge 2 ];
+    then
+        echo "NVM commands are already added to .bashrc"
+    else
+        echo "export NVM_DIR=\"\$HOME/.nvm\"" >> "$HOME/.bashrc"
+        echo "[ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"  # This loads nvm" >> "$HOME/.bashrc"
+    fi
+
+    # Ensure NVM is now available in PATH
+    source "$HOME/.bashrc"
 }
 
 install_node_version() {
-    # Setting up environment for NVM    
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-
     # Check if NVM is installed
     if [ -s "$NVM_DIR/nvm.sh" ];
     then
@@ -30,9 +43,6 @@ install_node_version() {
         echo "Installing NVM..."
         install_nvm
     fi
-
-    # Load NVM
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
     echo "Installing Node version $node_version..."
     nvm install $node_version
