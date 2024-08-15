@@ -6,6 +6,7 @@ files:
 hooks:
   AfterInstall:
     - location: scripts/installDependencies.sh
+      runas: root
     - location: scripts/installApplication.sh
       runas: root
   ApplicationStart:
