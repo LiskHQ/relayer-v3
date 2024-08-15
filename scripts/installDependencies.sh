@@ -1,9 +1,11 @@
+#!/bin/bash
+
 # Install nodejs dependencies
 echo "Current DIR: $PWD"
 # Script to install Node.js using NVM on Ubuntu
 
 # Read node version from .nvmrc file
-node_version=$(cat .nvmrc | tr -d "\n")
+node_version=$(cat $PWD/../.nvmrc | tr -d "\n")
 
 # Function to install NVM
 install_nvm() {
@@ -11,20 +13,18 @@ install_nvm() {
 }
 
 install_node_version() {
-    # Check if NVM is installed
-    export NVM_DIR="$HOME/.nvm"
+    # Setting up environment for NVM    
+    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
     
+    # Check if NVM is installed
     if [ -s "$NVM_DIR/nvm.sh" ];
     then
         echo "NVM is already installed."
     else
         echo "Installing NVM..."
         install_nvm
-    fi
-
-    # Setting up environment for NVM    
-    export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+    fi   
     
     echo "Installing Node version $node_version..."
     nvm install $node_version
