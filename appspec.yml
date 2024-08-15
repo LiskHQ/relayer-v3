@@ -4,9 +4,10 @@ files:
   - source: /
     destination: /home/ubuntu/lisk-across-relayer
 hooks:
-  BeforeInstall:
-    - location: scripts/installDependencies.sh
   AfterInstall:
+    - location: scripts/installDependencies.sh
     - location: scripts/installApplication.sh
+      runas: root
   ApplicationStart:
     - location: scripts/runMainnet.sh
+      runas: root
