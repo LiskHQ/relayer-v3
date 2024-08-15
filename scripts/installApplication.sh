@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $HOME/.bashrc
+
 # Install application
 app_dir_name=/home/ubuntu/lisk-across-relayer
 cd $app_dir_name
