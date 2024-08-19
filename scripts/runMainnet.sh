@@ -38,6 +38,7 @@ echo "All env vars from secrets are set."
 
 # Simulation mode OFF
 echo "SEND_RELAYS=true" >> ${app_dir}/.env
+echo "SEND_REBALANCES=true"  >> ${app_dir}/.env
 
 # RPC provider configuration
 echo "RPC_PROVIDERS=DRPC,GELATO,TENDERLY" >> ${app_dir}/.env
