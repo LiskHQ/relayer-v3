@@ -47,7 +47,7 @@ echo "RPC_PROVIDERS_1135=GELATO,DRPC" >> ${app_dir}/.env
 # Mainnet settings
 echo "RELAYER_ORIGIN_CHAINS=[1,1135]" >> ${app_dir}/.env
 echo "RELAYER_DESTINATION_CHAINS=[1,1135]" >> ${app_dir}/.env
-echo "MIN_RELAYER_FEE_PCT=0.0001" >> ${app_dir}/.env
+echo "MIN_RELAYER_FEE_PCT=0.00005" >> ${app_dir}/.env
 
 # Fee settings
 echo "PRIORITY_FEE_SCALER_1=0.8"  >> ${app_dir}/.env
