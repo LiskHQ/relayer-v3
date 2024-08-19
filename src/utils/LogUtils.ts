@@ -3,7 +3,8 @@ import winston from "winston";
 import { createNewLogger, createConsoleTransport } from "@uma/logger";
 
 const transports = process.env.DEBUG_LOG === "true" ? [createConsoleTransport()] : [new winston.transports.Console()];
+const config = process.env.DEBUG_LOG === "true" ? {} : { createConsoleTransport: false };
 
-export const Logger = createNewLogger(transports, { createConsoleTransport: false });
+export const Logger = createNewLogger(transports, config);
 
 export type DefaultLogLevels = "debug" | "info" | "warn" | "error";
