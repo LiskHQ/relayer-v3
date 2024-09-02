@@ -25,9 +25,9 @@
     },
     "LSK": {
       "1135": {
-        "targetPct": 30,
-        "thresholdPct": 10,
-        "targetOverageBuffer": 2.5
+        "targetPct": 10,
+        "thresholdPct": 1,
+        "targetOverageBuffer": 9
       }
     },
     "USDT": {
