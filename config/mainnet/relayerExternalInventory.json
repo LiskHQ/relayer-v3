@@ -27,7 +27,7 @@
       "1135": {
         "targetPct": 10,
         "thresholdPct": 1,
-        "targetOverageBuffer": 9
+        "targetOverageBuffer": 10
       }
     },
     "USDT": {
