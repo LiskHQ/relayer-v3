@@ -33,8 +33,6 @@ import {
 import { approveTokens, getAllowanceCacheKey, getTokenAllowanceFromCache, setTokenAllowanceInCache } from "./utils";
 import { BaseChainAdapter, aboveAllowanceThreshold } from "../../adapter";
 
-import { BaseChainAdapter } from "../../adapter";
-
 export interface DepositEvent extends SortableEvent {
   amount: BigNumber;
   transactionHash: string;
