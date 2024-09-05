@@ -29,10 +29,10 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
   // Explicitly don't log ignoredAddresses because it can be huge and can overwhelm log transports.
   const { ignoredAddresses: _ignoredConfig, ...loggedConfig } = config;
   logger.debug({ at: "Relayer#run", message: "Relayer started 🏃‍♂️", loggedConfig, relayerRun });
-  
+
   logger.info({ at: "Relayer#run", message: "Starting relayer API server." });
   await runAPIServer(logger);
-  
+
   const relayerClients = await constructRelayerClients(logger, config, baseSigner);
   const relayer = new Relayer(await baseSigner.getAddress(), logger, relayerClients, config);
   const simulate = !config.sendingRelaysEnabled;
