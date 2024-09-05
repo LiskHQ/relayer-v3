@@ -1,0 +1,20 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # once a day
+  workflow_dispatch: # on button click
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # `yarn test` takes longer time
+    steps:
+      - uses: tgymnich/fork-sync
+        with:
+          owner: across-protocol
+          repo: relayer
+          head: master
+          base: master
+          pr_title: Sync fork repo
+          pr_message: Merge latest changes from upstream repo
