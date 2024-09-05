@@ -31,6 +31,7 @@ import {
   getTranslatedTokenAddress,
 } from "../../utils";
 import { approveTokens, getAllowanceCacheKey, getTokenAllowanceFromCache, setTokenAllowanceInCache } from "./utils";
+import { BaseChainAdapter, aboveAllowanceThreshold } from "../../adapter";
 
 import { BaseChainAdapter } from "../../adapter";
 
@@ -157,7 +158,7 @@ export class BaseAdapter extends BaseChainAdapter {
       .map((allowance, idx) => {
         const token = l1TokenContracts[idx];
         const bridge = l1Bridges[idx];
-        if (token && bridge && allowance.lt(MAX_SAFE_ALLOWANCE)) {
+        if (token && bridge && !aboveAllowanceThreshold(allowance)) {
           return { token, bridge };
         }
       })

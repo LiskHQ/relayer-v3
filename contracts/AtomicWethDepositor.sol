@@ -56,6 +56,14 @@ contract AtomicWethDepositor is Ownable, MultiCaller {
     ///////////////////////////////
 
     Weth public immutable weth = Weth(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    OvmL1Bridge public immutable optimismL1Bridge = OvmL1Bridge(0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1);
+    OvmL1Bridge public immutable modeL1Bridge = OvmL1Bridge(0x735aDBbE72226BD52e818E7181953f42E3b0FF21);
+    OvmL1Bridge public immutable bobaL1Bridge = OvmL1Bridge(0xdc1664458d2f0B6090bEa60A8793A4E66c2F1c00);
+    OvmL1Bridge public immutable baseL1Bridge = OvmL1Bridge(0x3154Cf16ccdb4C6d922629664174b904d80F2C35);
+    OvmL1Bridge public immutable liskL1Bridge = OvmL1Bridge(0x2658723Bf70c7667De6B25F99fcce13A16D25d08);
+    OvmL1Bridge public immutable redstoneL1Bridge = OvmL1Bridge(0xc473ca7E02af24c129c2eEf51F2aDf0411c1Df69);
+    OvmL1Bridge public immutable blastL1Bridge = OvmL1Bridge(0x697402166Fbf2F22E970df8a6486Ef171dbfc524);
+    OvmL1Bridge public immutable zoraL1Bridge = OvmL1Bridge(0x3e2Ea9B92B7E48A52296fD261dc26fd995284631);
     PolygonL1Bridge public immutable polygonL1Bridge = PolygonL1Bridge(0xA0c68C638235ee32657e8f720a23ceC1bFc77C77);
     ZkSyncL1Bridge public immutable zkSyncL1Bridge = ZkSyncL1Bridge(0x32400084C286CF3E17e7B677ea9583e60a000324);
     LineaL1MessageService public immutable lineaL1MessageService =
@@ -100,9 +108,25 @@ contract AtomicWethDepositor is Ownable, MultiCaller {
         weth.withdraw(amount);
     }
 
-    ///////////////////////////////
-    //     Admin Functions       //
-    ///////////////////////////////
+        if (chainId == 10) {
+            optimismL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 8453) {
+            baseL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 34443) {
+            modeL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 1135) {
+            liskL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 81457) {
+            blastL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 690) {
+            redstoneL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 7777777) {
+            zoraL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else if (chainId == 288) {
+            bobaL1Bridge.depositETHTo{ value: amount }(to, l2Gas, "");
+        } else {
+            revert("Invalid OVM chainId");
+        }
 
     /**
      * @notice Sets the OvmL1Bridge contract for a given chainId.
