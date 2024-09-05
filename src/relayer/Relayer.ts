@@ -718,8 +718,6 @@ export class Relayer {
       .flat()
       .map(({ deposit }) => deposit);
 
-    this.fillLimits = this.computeFillLimits();
-
     this.logger.debug({
       at: "Relayer::checkForUnfilledDepositsAndFill",
       message: `${allUnfilledDeposits.length} unfilled deposits found.`,
