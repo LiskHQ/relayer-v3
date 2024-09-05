@@ -9,6 +9,8 @@
 
 # Across V3 Relayer
 
+[![.github/workflows/fork-sync.yaml](https://github.com/LiskHQ/across-relayer/actions/workflows/fork-sync.yaml/badge.svg?branch=master)](https://github.com/LiskHQ/across-relayer/actions/workflows/fork-sync.yaml)
+
 This code implements [UMIP-157](https://github.com/UMAprotocol/UMIPs/blob/master/UMIPs/umip-157.md) and interacts with these [smart contracts](https://github.com/across-protocol/contracts). The contracts were audited [by OpenZeppelin](https://blog.openzeppelin.com/across-v3-incremental-audit).
 
 # How to run a Relayer
