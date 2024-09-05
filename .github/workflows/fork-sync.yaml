@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30 # `yarn test` takes longer time
     steps:
-      - uses: tgymnich/fork-sync
+      - uses: tgymnich/fork-sync@v2.0.10
         with:
           owner: across-protocol
           repo: relayer

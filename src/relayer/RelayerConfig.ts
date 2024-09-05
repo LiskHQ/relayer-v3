@@ -31,10 +31,6 @@ export class RelayerConfig extends CommonConfig {
   readonly indexerPath: string;
   readonly inventoryConfig: InventoryConfig;
   readonly debugProfitability: boolean;
-  // Whether token price fetch failures will be ignored when computing relay profitability.
-  // If this is false, the relayer will throw an error when fetching prices fails.
-  readonly skipRelays: boolean;
-  readonly skipRebalancing: boolean;
   readonly sendingRelaysEnabled: boolean;
   readonly sendingRebalancesEnabled: boolean;
   readonly sendingMessageRelaysEnabled: boolean;
@@ -54,9 +50,15 @@ export class RelayerConfig extends CommonConfig {
   readonly minDepositConfirmations: {
     [chainId: number]: DepositConfirmationConfig[];
   };
+  // The amount of runs the looping relayer will make before it logs shortfalls and unprofitable fills again. If set to the one-shot
+  // relayer, then this environment variable will do nothing.
+  readonly loggingInterval: number;
   // Set to false to skip querying max deposit limit from /limits Vercel API endpoint. Otherwise relayer will not
   // fill any deposit over the limit which is based on liquidReserves in the HubPool.
   readonly ignoreLimits: boolean;
+  // Set to all chain ids where the relayer should use tryMulticall over multicall on the associated spoke pool.
+  // It is up to the user to ensure that the spoke pool on the target chain has tryMulticall in its active implementation.
+  readonly tryMulticallChains: number[];
 
   // TODO: Remove this config item once we fully move to generic chain adapters.
   readonly useGenericAdapter: boolean;
@@ -76,8 +78,6 @@ export class RelayerConfig extends CommonConfig {
       SEND_RELAYS,
       SEND_REBALANCES,
       SEND_MESSAGE_RELAYS,
-      SKIP_RELAYS,
-      SKIP_REBALANCING,
       SEND_SLOW_RELAYS,
       MIN_RELAYER_FEE_PCT,
       ACCEPT_INVALID_FILLS,
@@ -85,7 +85,9 @@ export class RelayerConfig extends CommonConfig {
       RELAYER_IGNORE_LIMITS,
       RELAYER_EXTERNAL_INDEXER,
       RELAYER_SPOKEPOOL_INDEXER_PATH,
+      RELAYER_TRY_MULTICALL_CHAINS,
       RELAYER_USE_GENERIC_ADAPTER,
+      RELAYER_LOGGING_INTERVAL,
     } = env;
     super(env);
 
@@ -108,6 +110,9 @@ export class RelayerConfig extends CommonConfig {
       : [];
 
     this.minRelayerFeePct = toBNWei(MIN_RELAYER_FEE_PCT || Constants.RELAYER_MIN_FEE_PCT);
+
+    this.tryMulticallChains = JSON.parse(RELAYER_TRY_MULTICALL_CHAINS ?? "[]");
+    this.loggingInterval = Number(RELAYER_LOGGING_INTERVAL ?? 30);
 
     assert(
       !isDefined(RELAYER_EXTERNAL_INVENTORY_CONFIG) || !isDefined(RELAYER_INVENTORY_CONFIG),
@@ -243,8 +248,6 @@ export class RelayerConfig extends CommonConfig {
     this.sendingRelaysEnabled = SEND_RELAYS === "true";
     this.sendingRebalancesEnabled = SEND_REBALANCES === "true";
     this.sendingMessageRelaysEnabled = SEND_MESSAGE_RELAYS === "true";
-    this.skipRelays = SKIP_RELAYS === "true";
-    this.skipRebalancing = SKIP_REBALANCING === "true";
     this.sendingSlowRelaysEnabled = SEND_SLOW_RELAYS === "true";
     this.acceptInvalidFills = ACCEPT_INVALID_FILLS === "true";
 

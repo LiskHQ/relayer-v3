@@ -1,6 +1,6 @@
 export function usage(badInput: string | undefined = undefined): boolean {
   let usageStr = badInput ? `\nUnrecognized input: "${badInput}".\n\n` : "";
-  const walletTypes = "secret|mnemonic|privateKey|gckms|void";
+  const walletTypes = "secret|mnemonic|privateKey|gckms|awskms|void";
   const walletUsage = `--wallet <${walletTypes}> | --wallet void [--address <ro-address>]`;
 
   usageStr += `
