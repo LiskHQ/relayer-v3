@@ -34,6 +34,9 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
   const simulate = !config.sendingRelaysEnabled;
   const enableSlowFills = config.sendingSlowRelaysEnabled;
 
+  logger.info({ at: "Relayer#run", message: "Starting relayer API server." });
+  await runAPIServer(logger);
+
   let run = 1;
   let txnReceipts: { [chainId: number]: Promise<string[]> };
   try {
