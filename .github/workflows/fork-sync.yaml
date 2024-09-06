@@ -8,13 +8,17 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     timeout-minutes: 30 # `yarn test` takes longer time
     steps:
       - uses: tgymnich/fork-sync@v2.0.10
         with:
-          owner: across-protocol
-          repo: relayer
+          owner: LiskHQ
+          repo: across-relayer
           head: master
           base: master
-          pr_title: Sync fork repo
+          auto_merge: false
+          pr_title: Sync with upstream repo
           pr_message: Merge latest changes from upstream repo
