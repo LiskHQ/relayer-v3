@@ -30,4 +30,8 @@ jobs:
             echo "Running format is required"
             exit 1
           fi
-      - run: yarn test
+      - name: Validate configuration
+        run: yarn validate-config
+      - name: Test
+        shell: bash
+        run: yarn test

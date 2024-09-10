@@ -55,6 +55,7 @@
     "lint-fix": "yarn eslint --fix && yarn prettier --write",
     "format": "prettier --write '**/*'",
     "eslint": "eslint .",
+    "validate-config": "yarn ts-node ./scripts/validateConfig.ts",
     "test": "RELAYER_TEST=true hardhat test",
     "build": "tsc --build",
     "watch": "tsc --build --incremental --watch",
