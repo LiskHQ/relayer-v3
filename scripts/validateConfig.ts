@@ -7,16 +7,12 @@ export async function run(): Promise<void> {
   console.log("Validating config");
 
   const env: NodeJS.ProcessEnv = {
-    MAX_RELAYER_DEPOSIT_LOOK_BACK: "1800",
     RELAYER_TOKENS:
-      '["0x16B840bA01e2b05fc2268eAf6d18892a11EC29D6", "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0", "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"]',
+      '["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "0x6033F7f88332B8db6ad452B7C6D5bB643990aE3f", "0xdAC17F958D2ee523a2206206994597C13D831ec7"]',
     MIN_DEPOSIT_CONFIRMATIONS:
-      '{ "1000000": { "919": 1, "4202": 1, "80002": 1, "84532": 1, "421614": 1, "11155111": 1, "11155420": 1 } }',
-    RELAYER_IGNORE_LIMITS: "true",
-    RELAYER_ORIGIN_CHAINS: JSON.stringify([11155111, 4202]),
-    RELAYER_DESTINATION_CHAINS: JSON.stringify([11155111, 4202]),
-    HUB_CHAIN_ID: "11155111",
-    SEND_REBALANCES: "true",
+      '{"5000": { "1": 5, "1135": 10 }, "2000": { "1": 4, "1135": 10 }, "100": { "1": 3, "1135": 10 } }',
+    RELAYER_ORIGIN_CHAINS: JSON.stringify([1,1135]),
+    RELAYER_DESTINATION_CHAINS: JSON.stringify([1,1135]),
     RELAYER_EXTERNAL_INVENTORY_CONFIG: "config/mainnet/relayerExternalInventory.json",
   };
   new RelayerConfig(env);
