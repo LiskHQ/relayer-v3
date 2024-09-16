@@ -1,5 +1,5 @@
 # https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-amazon-elastic-container-service
-name: Build and push docker image
+name: Build docker image
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
       - master
 
 jobs:
-  deploy:
-    name: Deploy
+  docker:
+    name: Build and push docker image
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
 
@@ -39,4 +39,6 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.docker-image.outputs.image }}
+          tags: 
+            - latest
+            - ${{ steps.docker-image.outputs.image }}
