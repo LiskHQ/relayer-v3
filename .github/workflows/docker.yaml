@@ -38,6 +38,6 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: 
+          tags:
             - latest
             - ${{ steps.docker-image.outputs.image }}
