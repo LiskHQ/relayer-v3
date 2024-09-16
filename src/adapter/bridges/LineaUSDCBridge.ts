@@ -42,7 +42,7 @@ export class LineaUSDCBridge extends BaseBridgeAdapter {
   ): Promise<BridgeEvents> {
     const events = await paginatedEventQuery(
       this.getL1Bridge(),
-      this.getL1Bridge().filters.Deposited(undefined, undefined, toAddress),
+      this.getL1Bridge().filters.Deposited(undefined, undefined, fromAddress),
       eventConfig
     );
     return {
@@ -58,7 +58,7 @@ export class LineaUSDCBridge extends BaseBridgeAdapter {
   ): Promise<BridgeEvents> {
     const events = await paginatedEventQuery(
       this.getL2Bridge(),
-      this.getL2Bridge().filters.ReceivedFromOtherLayer(toAddress),
+      this.getL2Bridge().filters.ReceivedFromOtherLayer(fromAddress),
       eventConfig
     );
     // There is no "from" address in this event.

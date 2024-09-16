@@ -29,7 +29,14 @@ import {
   TOKEN_EQUIVALENCE_REMAPPING,
   ZERO_ADDRESS,
 } from "../utils";
-import { Deposit, DepositWithBlock, L1Token, SpokePoolClientsByChain } from "../interfaces";
+import {
+  Deposit,
+  DepositWithBlock,
+  L1Token,
+  SpokePoolClientsByChain,
+  V3Deposit,
+  V3DepositWithBlock,
+} from "../interfaces";
 import { HubPoolClient } from ".";
 
 type TransactionCostEstimate = sdkUtils.TransactionCostEstimate;
@@ -200,7 +207,7 @@ export class ProfitClient {
     return price;
   }
 
-  private async _getTotalGasCost(deposit: Deposit, relayer: string): Promise<TransactionCostEstimate> {
+  private async _getTotalGasCost(deposit: V3Deposit, relayer: string): Promise<TransactionCostEstimate> {
     try {
       return await this.relayerFeeQueries[deposit.destinationChainId].getGasCosts(deposit, relayer);
     } catch (err) {
@@ -216,7 +223,7 @@ export class ProfitClient {
     }
   }
 
-  async getTotalGasCost(deposit: Deposit): Promise<TransactionCostEstimate> {
+  async getTotalGasCost(deposit: V3Deposit): Promise<TransactionCostEstimate> {
     const { destinationChainId: chainId } = deposit;
 
     // If there's no attached message, gas consumption from previous fills can be used in most cases.
@@ -230,7 +237,7 @@ export class ProfitClient {
 
   // Estimate the gas cost of filling this relay.
   async estimateFillCost(
-    deposit: Deposit
+    deposit: V3Deposit
   ): Promise<Pick<FillProfit, "nativeGasCost" | "tokenGasCost" | "gasTokenPriceUsd" | "gasCostUsd">> {
     const { destinationChainId: chainId } = deposit;
 
@@ -305,13 +312,13 @@ export class ProfitClient {
   }
 
   /**
-   * @param deposit Deposit object.
+   * @param deposit V3Deposit object.
    * @param lpFeePct Predetermined LP fee as a multiplier of the deposit inputAmount.
    * @param minRelayerFeePct Relayer minimum fee requirements.
    * @returns FillProfit object detailing the profitability breakdown.
    */
   async calculateFillProfitability(
-    deposit: Deposit,
+    deposit: V3Deposit,
     lpFeePct: BigNumber,
     minRelayerFeePct: BigNumber
   ): Promise<FillProfit> {
@@ -419,7 +426,7 @@ export class ProfitClient {
   }
 
   async getFillProfitability(
-    deposit: Deposit,
+    deposit: V3Deposit,
     lpFeePct: BigNumber,
     l1Token: L1Token,
     repaymentChainId: number
@@ -460,7 +467,7 @@ export class ProfitClient {
   }
 
   async isFillProfitable(
-    deposit: Deposit,
+    deposit: V3Deposit,
     lpFeePct: BigNumber,
     l1Token: L1Token,
     repaymentChainId: number
@@ -494,7 +501,7 @@ export class ProfitClient {
   }
 
   captureUnprofitableFill(
-    deposit: DepositWithBlock,
+    deposit: V3DepositWithBlock,
     lpFeePct: BigNumber,
     relayerFeePct: BigNumber,
     gasCost: BigNumber

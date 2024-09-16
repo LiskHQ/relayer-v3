@@ -53,10 +53,6 @@ export class RelayerConfig extends CommonConfig {
   // The amount of runs the looping relayer will make before it logs shortfalls and unprofitable fills again. If set to the one-shot
   // relayer, then this environment variable will do nothing.
   readonly loggingInterval: number;
-
-  // Maintenance interval (in seconds).
-  readonly maintenanceInterval: number;
-
   // Set to false to skip querying max deposit limit from /limits Vercel API endpoint. Otherwise relayer will not
   // fill any deposit over the limit which is based on liquidReserves in the HubPool.
   readonly ignoreLimits: boolean;
@@ -91,8 +87,7 @@ export class RelayerConfig extends CommonConfig {
       RELAYER_SPOKEPOOL_INDEXER_PATH,
       RELAYER_TRY_MULTICALL_CHAINS,
       RELAYER_USE_GENERIC_ADAPTER,
-      RELAYER_LOGGING_INTERVAL = "30",
-      RELAYER_MAINTENANCE_INTERVAL = "60",
+      RELAYER_LOGGING_INTERVAL,
     } = env;
     super(env);
 
@@ -117,8 +112,7 @@ export class RelayerConfig extends CommonConfig {
     this.minRelayerFeePct = toBNWei(MIN_RELAYER_FEE_PCT || Constants.RELAYER_MIN_FEE_PCT);
 
     this.tryMulticallChains = JSON.parse(RELAYER_TRY_MULTICALL_CHAINS ?? "[]");
-    this.loggingInterval = Number(RELAYER_LOGGING_INTERVAL);
-    this.maintenanceInterval = Number(RELAYER_MAINTENANCE_INTERVAL);
+    this.loggingInterval = Number(RELAYER_LOGGING_INTERVAL ?? 30);
 
     assert(
       !isDefined(RELAYER_EXTERNAL_INVENTORY_CONFIG) || !isDefined(RELAYER_INVENTORY_CONFIG),
