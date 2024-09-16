@@ -1,4 +1,3 @@
-# https://docs.github.com/en/actions/deployment/deploying-to-your-cloud-provider/deploying-to-amazon-elastic-container-service
 name: Build docker image
 
 on:
