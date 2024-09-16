@@ -9,7 +9,7 @@ import chaiExclude from "chai-exclude";
 import sinon from "sinon";
 import winston from "winston";
 import { GLOBAL_CONFIG_STORE_KEYS } from "../../src/clients";
-import { Deposit, DepositWithBlock, FillWithBlock, SlowFillLeaf } from "../../src/interfaces";
+import { V3Deposit, V3DepositWithBlock, V3FillWithBlock, V3SlowFillLeaf } from "../../src/interfaces";
 import { isDefined, spreadEvent, toBN, toBNWei, toWei, utf8ToHex, ZERO_ADDRESS } from "../../src/utils";
 import {
   DEFAULT_BLOCK_RANGE_FOR_CHAIN,
@@ -276,7 +276,7 @@ export async function depositV3(
     exclusivityDeadline?: number;
     exclusiveRelayer?: string;
   } = {}
-): Promise<DepositWithBlock> {
+): Promise<V3DepositWithBlock> {
   const depositor = signer.address;
   const recipient = opts.recipient ?? depositor;
 
@@ -349,7 +349,7 @@ export async function depositV3(
 
 export async function updateDeposit(
   spokePool: Contract,
-  deposit: Deposit,
+  deposit: V3Deposit,
   depositor: SignerWithAddress
 ): Promise<string> {
   const { updatedRecipient, updatedOutputAmount, updatedMessage } = deposit;
@@ -380,10 +380,10 @@ export async function updateDeposit(
 
 export async function fillV3Relay(
   spokePool: Contract,
-  deposit: Omit<Deposit, "destinationChainId">,
+  deposit: Omit<V3Deposit, "destinationChainId">,
   signer: SignerWithAddress,
   repaymentChainId?: number
-): Promise<FillWithBlock> {
+): Promise<V3FillWithBlock> {
   const destinationChainId = Number(await spokePool.chainId());
   assert.notEqual(deposit.originChainId, destinationChainId);
 
@@ -439,13 +439,13 @@ export async function addLiquidity(
   await hubPool.connect(signer).addLiquidity(l1Token.address, amount);
 }
 
-export function buildV3SlowRelayLeaves(deposits: interfaces.Deposit[], lpFeePct: BigNumber): SlowFillLeaf[] {
+export function buildV3SlowRelayLeaves(deposits: interfaces.V3Deposit[], lpFeePct: BigNumber): V3SlowFillLeaf[] {
   const chainId = deposits[0].destinationChainId;
   assert.isTrue(deposits.every(({ destinationChainId }) => chainId === destinationChainId));
   return deposits
     .map((deposit) => {
       const lpFee = deposit.inputAmount.mul(lpFeePct).div(toBNWei(1));
-      const slowFillLeaf: SlowFillLeaf = {
+      const slowFillLeaf: V3SlowFillLeaf = {
         relayData: {
           depositor: deposit.depositor,
           recipient: deposit.recipient,

@@ -1,5 +1,6 @@
 import { Refund, RelayerRefundLeaf, RelayerRefundLeafWithGroup, SpokePoolTargetBalance } from "../interfaces";
-import { BigNumber, bnZero, compareAddresses, getNetSendAmountForL1Token } from "../utils";
+import { BigNumber, bnZero, compareAddresses } from "../utils";
+import { getNetSendAmountForL1Token } from "./PoolRebalanceUtils";
 
 export function getAmountToReturnForRelayerRefundLeaf(
   spokePoolTargetBalance: SpokePoolTargetBalance,

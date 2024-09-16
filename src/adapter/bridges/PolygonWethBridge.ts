@@ -64,7 +64,7 @@ export class PolygonWethBridge extends BaseBridgeAdapter {
   ): Promise<BridgeEvents> {
     const events = await paginatedEventQuery(
       this.getL1Bridge(),
-      this.getL1Bridge().filters.LockedEther(undefined, toAddress),
+      this.getL1Bridge().filters.LockedEther(undefined, fromAddress),
       eventConfig
     );
     return {
@@ -82,7 +82,7 @@ export class PolygonWethBridge extends BaseBridgeAdapter {
   ): Promise<BridgeEvents> {
     const events = await paginatedEventQuery(
       this.getL2Bridge(),
-      this.getL2Bridge().filters.Transfer(ZERO_ADDRESS, toAddress),
+      this.getL2Bridge().filters.Transfer(ZERO_ADDRESS, fromAddress),
       eventConfig
     );
     return {
