@@ -12,6 +12,7 @@ import {
 import { Relayer } from "./Relayer";
 import { RelayerConfig } from "./RelayerConfig";
 import { constructRelayerClients } from "./RelayerClientHelper";
+import { runAPIServer } from "../api";
 config();
 let logger: winston.Logger;
 
@@ -50,6 +51,9 @@ export async function runRelayer(_logger: winston.Logger, baseSigner: Signer): P
   const { spokePoolClients } = relayerClients;
   const simulate = !sendingRelaysEnabled;
   let txnReceipts: { [chainId: number]: Promise<string[]> } = {};
+
+  logger.info({ at: "Relayer#run", message: "Starting relayer API server." });
+  await runAPIServer(logger);
 
   try {
     for (let run = 1; !stop; ++run) {
