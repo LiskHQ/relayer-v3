@@ -40,3 +40,6 @@ dist/
 
 # env example files
 *.env.example
+
+# local files
+.secret
