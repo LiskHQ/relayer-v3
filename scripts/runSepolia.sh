@@ -30,8 +30,12 @@ echo "RPC_PROVIDER_GELATO_4202=$RPC_PROVIDER_GELATO_4202" >> ${app_dir}/.env
 
 echo "All env vars from secrets are set."
 
+# Set the bot identifier
+echo "BOT_IDENTIFIER=LISK_ACROSS_RELAYER"  >> ${app_dir}/.env
+
 # Simulation mode ON
 echo "SEND_RELAYS=true" >> ${app_dir}/.env
+
 # RPC provider configuration
 echo "RPC_PROVIDERS=TENDERLY,GELATO,DRPC" >> ${app_dir}/.env
 echo "RPC_PROVIDERS_11155111=TENDERLY,DRPC" >> ${app_dir}/.env
@@ -42,8 +46,10 @@ echo "RELAYER_IGNORE_LIMITS=true" >> ${app_dir}/.env
 echo "HUB_CHAIN_ID=11155111" >> ${app_dir}/.env
 echo "RELAYER_ORIGIN_CHAINS=[11155111,4202]" >> ${app_dir}/.env
 echo "RELAYER_DESTINATION_CHAINS=[11155111,4202]" >> ${app_dir}/.env
+
 # Redis settings
 echo "REDIS_URL='redis://127.0.0.1:6379'" >> ${app_dir}/.env
+
 # Supported token settings
 echo RELAYER_TOKENS=\'[\"0x16B840bA01e2b05fc2268eAf6d18892a11EC29D6\", \"0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0\", \"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14\"]\'  >> ${app_dir}/.env
 echo MIN_DEPOSIT_CONFIRMATIONS=\'{ \"1000000\": { \"919\": 1, \"4202\": 1, \"80002\": 1, \"84532\": 1, \"421614\": 1, \"11155111\": 1, \"11155420\": 1 } }\' >> ${app_dir}/.env

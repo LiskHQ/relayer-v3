@@ -36,6 +36,9 @@ echo "SLACK_CONFIG=$SLACK_CONFIG" >> ${app_dir}/.env
 
 echo "All env vars from secrets are set."
 
+# Set the bot identifier
+echo "BOT_IDENTIFIER=LISK_ACROSS_RELAYER"  >> ${app_dir}/.env
+
 # Simulation mode OFF
 echo "SEND_RELAYS=true" >> ${app_dir}/.env
 echo "SEND_REBALANCES=true"  >> ${app_dir}/.env
