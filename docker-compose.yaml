@@ -1,0 +1,29 @@
+services:
+  cache:
+    image: redis:7.0.4-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server
+    healthcheck:
+      test: redis-cli ping
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  
+  app:
+    container_name: relayer
+    #image: 132202091885.dkr.ecr.eu-west-3.amazonaws.com/liskhq/across-relayer:latest
+    restart: always
+    build: .
+    volumes:
+       - ./.aws:/root/.aws:ro
+    environment:
+      - REDIS_URL=redis://localhost:6379
+    depends_on:
+      cache:
+          condition: "service_healthy"
+    ports:
+      - ${HOST:-0.0.0.0}:${PORT:-3000}:${PORT:-3000}
+    healthcheck:
+      test: curl --fail http://app:${PORT:-3000}/healthz
