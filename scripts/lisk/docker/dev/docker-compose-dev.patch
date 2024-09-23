@@ -7,7 +7,7 @@ index f0fd37d7..f9b50413 100644
          condition: service_healthy
      volumes:
 +      - ./.aws/credentials:/home/lisk/.aws/credentials
-       - ./scripts/lisk/docker/${NETWORK:-sepolia}/containerStartBot_1.sh:/home/lisk/across-relayer/scripts/start.sh
+       - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStartBot_1.sh:/home/lisk/across-relayer/scripts/start.sh
      networks:
        - across_relayer_network
      restart: always
