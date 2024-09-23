@@ -13,8 +13,7 @@ WORKDIR /home/builder/build
 
 COPY . .
 
-RUN yarn install
-RUN yarn build
+RUN yarn install --frozen-lockfile && yarn build
 
 ##### Stage 2
 
@@ -30,6 +29,3 @@ WORKDIR /home/lisk/across-relayer
 COPY --chown=lisk:lisk --from=builder /home/builder/build/dist/ ./dist/
 COPY --chown=lisk:lisk --from=builder /home/builder/build/node_modules/ ./node_modules/
 COPY --chown=lisk:lisk --from=builder /home/builder/build/config/ ./config/
-COPY --chown=lisk:lisk --from=builder /home/builder/build/scripts/runMainnet.sh ./start.sh
-
-CMD ["/bin/sh", "./start.sh"]
