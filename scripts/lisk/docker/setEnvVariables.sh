@@ -2,8 +2,8 @@
 set -eu
 
 # Set env var from secrets
-# secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:mainnet/lisk-across-relayer/aws-CSi7ka
-secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:sepolia/across-relayer-dev/aws-7CIqpl
+secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:mainnet/lisk-across-relayer/aws-CSi7ka
+# secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:sepolia/across-relayer-dev/aws-7CIqpl
 RELAYER_CONFIG=`aws --region eu-west-3 secretsmanager get-secret-value --secret-id ${secret_id} | jq --raw-output .SecretString | jq -r .`
 
 echo "Setting environment variables within the current shell on the host"

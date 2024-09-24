@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - LISK-960-Add-docker-compose-definition-to-run-the-relayer-as-a-service
 
 jobs:
   docker:

@@ -30,7 +30,7 @@ services:
       driver: awslogs
       options:
         awslogs-region: eu-west-3
-        awslogs-group: /ec2/lisk-across-relayer-docker
+        awslogs-group: /ec2/lisk-across-relayer
         awslogs-stream: ec2/lisk.across.relayer.docker.log
     environment:
       - REDIS_URL=redis://redis:6379
