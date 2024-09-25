@@ -20,6 +20,10 @@ export NETWORK=`echo $RELAYER_CONFIG | jq -r ."NETWORK"`
 
 export RELAYER_1_API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_HOST"`
 
+export REBALANCER_API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_HOST"`
+
 export RELAYER_1_API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_PORT"`
+
+export REBALANCER_API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_PORT"`
 
 echo "Finished setting all the environment variables within the current shell on the host"

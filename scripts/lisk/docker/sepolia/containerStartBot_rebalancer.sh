@@ -34,7 +34,7 @@ echo "HUB_CHAIN_ID=$HUB_CHAIN_ID" >> ${env_file}
 echo "All env vars from secrets are set."
 
 # Set the bot identifier
-echo "BOT_IDENTIFIER=LISK_ACROSS_RELAYER_SEPOLIA"  >> ${env_file}
+echo "BOT_IDENTIFIER=LISK_ACROSS_REBALANCER_SEPOLIA"  >> ${env_file}
 
 # Relaying OFF rebalancing ON
 echo "SEND_RELAYS=false" >> ${env_file}

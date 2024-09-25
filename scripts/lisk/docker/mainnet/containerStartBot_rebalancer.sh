@@ -34,7 +34,7 @@ echo "SLACK_CONFIG=$SLACK_CONFIG" >> ${env_file}
 echo "All env vars from secrets are set."
 
 # Set the bot identifier
-echo "BOT_IDENTIFIER=LISK_ACROSS_RELAYER_1"  >> ${env_file}
+echo "BOT_IDENTIFIER=LISK_ACROSS_REBALANCER"  >> ${env_file}
 
 # Relaying OFF rebalancing ON
 echo "SEND_RELAYS=false" >> ${env_file}
