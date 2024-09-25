@@ -1,6 +1,11 @@
 #!/bin/bash
 set -eu
 
+if [ ! -z "$(git status --untracked-files=no --porcelain)" ]; then
+  echo "Please stash/commit your local changes and re-run the script."
+  exit 1
+fi
+
 . $(dirname $(realpath "$0"))/changeToAppInstallDir.sh
 
 . scripts/lisk/docker/dev/setEnvVariables.sh

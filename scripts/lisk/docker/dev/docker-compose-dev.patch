@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index f0fd37d7..f9b50413 100644
+index 5c229e7e..c4177aaf 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -21,17 +21,18 @@ services:
@@ -16,13 +16,13 @@ index f0fd37d7..f9b50413 100644
 -      driver: awslogs
 -      options:
 -        awslogs-region: eu-west-3
--        awslogs-group: /ec2/lisk-across-relayer-docker
+-        awslogs-group: /ec2/lisk-across-relayer
 -        awslogs-stream: ec2/lisk.across.relayer.docker.log
 +    # logging:
 +    #   driver: awslogs
 +    #   options:
 +    #     awslogs-region: eu-west-3
-+    #     awslogs-group: /ec2/lisk-across-relayer-docker
++    #     awslogs-group: /ec2/lisk-across-relayer
 +    #     awslogs-stream: ec2/lisk.across.relayer.docker.log
      environment:
        - REDIS_URL=redis://redis:6379
