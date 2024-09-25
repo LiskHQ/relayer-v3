@@ -31,6 +31,12 @@ echo "RPC_PROVIDER_GELATO_4202=$RPC_PROVIDER_GELATO_4202" >> ${env_file}
 HUB_CHAIN_ID=`echo $RELAYER_CONFIG | jq -r ."HUB_CHAIN_ID"`
 echo "HUB_CHAIN_ID=$HUB_CHAIN_ID" >> ${env_file}
 
+API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_HOST"`
+echo "API_SERVER_HOST=$API_SERVER_HOST" >> ${app_dir}/.env
+
+API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_PORT"`
+echo "API_SERVER_PORT=$API_SERVER_PORT" >> ${app_dir}/.env
+
 echo "All env vars from secrets are set."
 
 # Set the bot identifier
