@@ -19,6 +19,7 @@ dist/
 ## ignore files
 .*ignore
 .nvmrc
+*.patch
 
 # Ignore extensions
 *.env

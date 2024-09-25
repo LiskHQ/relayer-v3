@@ -4,11 +4,9 @@ files:
   - source: /
     destination: /home/ubuntu/lisk-across-relayer
 hooks:
-  AfterInstall:
-    - location: scripts/installDependencies.sh
-      runas: root
-    - location: scripts/installApplication.sh
-      runas: root
+  ApplicationStop:
+    - location: scripts/lisk/docker/composeStop.sh
+      timeout: 330
   ApplicationStart:
-    - location: scripts/runMainnet.sh
-      runas: root
+    - location: scripts/lisk/docker/composeStart.sh
+      timeout: 300
