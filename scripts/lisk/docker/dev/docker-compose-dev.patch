@@ -1,0 +1,54 @@
+diff --git a/docker-compose.yml b/docker-compose.yml
+index efae6ed..19b464d 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -41,17 +41,18 @@ services:
+       redis_relayer:
+         condition: service_healthy
+     volumes:
++      - ./.aws/credentials:/home/lisk/.aws/credentials
+       - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStartBot_relayer.sh:/home/lisk/across-relayer/scripts/start.sh
+     networks:
+       - across_relayer_network
+     restart: always
+     command: ["/bin/sh", "/home/lisk/across-relayer/scripts/start.sh"]
+-    logging:
+-      driver: awslogs
+-      options:
+-        awslogs-region: eu-west-3
+-        awslogs-group: /ec2/lisk-across-relayer
+-        awslogs-stream: ec2/lisk.across.relayer.docker.log
++    # logging:
++    #   driver: awslogs
++    #   options:
++    #     awslogs-region: eu-west-3
++    #     awslogs-group: /ec2/lisk-across-relayer
++    #     awslogs-stream: ec2/lisk.across.relayer.docker.log
+     environment:
+       - REDIS_URL=redis://redis_relayer:6371
+     ports:
+@@ -69,17 +70,18 @@ services:
+       redis_rebalancer:
+         condition: service_healthy
+     volumes:
++      - ./.aws/credentials:/home/lisk/.aws/credentials
+       - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStartBot_rebalancer.sh:/home/lisk/across-rebalancer/scripts/start.sh
+     networks:
+       - across_rebalancer_network
+     restart: always
+     command: ["/bin/sh", "/home/lisk/across-rebalancer/scripts/start.sh"]
+-    logging:
+-      driver: awslogs
+-      options:
+-        awslogs-region: eu-west-3
+-        awslogs-group: /ec2/lisk-across-relayer
+-        awslogs-stream: ec2/lisk.across.rebalancer.docker.log
++    # logging:
++    #   driver: awslogs
++    #   options:
++    #     awslogs-region: eu-west-3
++    #     awslogs-group: /ec2/lisk-across-relayer
++    #     awslogs-stream: ec2/lisk.across.rebalancer.docker.log
+     environment:
+       - REDIS_URL=redis://redis_rebalancer:6372
+     ports:
