@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:7-alpine
+    platform: linux/amd64
+    volumes:
+      - redis-data:/data
+    networks:
+      - across_relayer_network
+    restart: always
+    command: redis-server
+    healthcheck:
+      test: redis-cli ping
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  relayer_1:
+    image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
+    platform: linux/amd64
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStartBot_1.sh:/home/lisk/across-relayer/scripts/start.sh
+    networks:
+      - across_relayer_network
+    restart: always
+    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/start.sh"]
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: eu-west-3
+        awslogs-group: /ec2/lisk-across-relayer
+        awslogs-stream: ec2/lisk.across.relayer.docker.log
+    environment:
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - ${RELAYER_1_API_SERVER_HOST:-0.0.0.0}:${RELAYER_1_API_SERVER_PORT:-3000}:${RELAYER_1_API_SERVER_PORT:-3000}
+    healthcheck:
+      test: curl --fail http://relayer_1:${RELAYER_1_API_SERVER_PORT:-3000}/healthz
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  across_relayer_network:
+
+volumes:
+  redis-data:

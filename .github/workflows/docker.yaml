@@ -29,13 +29,15 @@ jobs:
       - name: Docker image
         id: docker-image
         run: |
-          echo "image=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "image=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}" >> $GITHUB_OUTPUT
 
       - name: Build and push the image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         id: docker-build
         with:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: latest,${{ steps.docker-image.outputs.image }}
+          tags: |
+            ${{ steps.docker-image.outputs.image }}:latest
+            ${{ steps.docker-image.outputs.image }}:${{ github.sha }}
