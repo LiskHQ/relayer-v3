@@ -38,7 +38,7 @@ services:
     ports:
       - ${RELAYER_1_API_SERVER_HOST:-0.0.0.0}:${RELAYER_1_API_SERVER_PORT:-3000}:${RELAYER_1_API_SERVER_PORT:-3000}
     healthcheck:
-      test: curl --fail http://relayer_1:${RELAYER_1_API_SERVER_PORT:-3000}/healthz
+      test: echo $$(wget --server-response http://relayer_1:${RELAYER_1_API_SERVER_PORT:-3000}/healthz 2>&1 | grep  '200 OK') | grep '200'  || exit 1
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -66,7 +66,7 @@ services:
     ports:
       - ${REBALANCER_API_SERVER_HOST:-0.0.0.0}:${REBALANCER_API_SERVER_PORT:-3001}:${REBALANCER_API_SERVER_PORT:-3001}
     healthcheck:
-      test: curl --fail http://rebalancer:${REBALANCER_API_SERVER_PORT:-3001}/healthz
+      test: echo $$(wget --server-response http://relayer_1:${RELAYER_1_API_SERVER_PORT:-3000}/healthz 2>&1 | grep  '200 OK') | grep '200'  || exit 1
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
