@@ -26,6 +26,7 @@ RUN apk add --no-cache aws-cli=~2 jq=~1 && \
 USER lisk
 WORKDIR /home/lisk/across-relayer
 
-COPY --chown=lisk:lisk --from=builder /home/builder/build/dist/ ./dist/
 COPY --chown=lisk:lisk --from=builder /home/builder/build/node_modules/ ./node_modules/
+COPY --chown=lisk:lisk --from=builder /home/builder/build/dist/ ./dist/
 COPY --chown=lisk:lisk --from=builder /home/builder/build/config/ ./config/
+COPY --chown=lisk:lisk --from=builder /home/builder/build/scripts/lisk/docker/ ./scripts/

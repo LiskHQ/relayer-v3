@@ -1,68 +1,64 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 2560875..c48f5a5 100644
+index 537902cb..1a42cba7 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -15,24 +15,25 @@ services:
-       retries: 3
+@@ -16,21 +16,24 @@ services:
  
    relayer_1:
+     container_name: relayer_1
 -    image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
++    # image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
 +    build: .
      platform: linux/amd64
      depends_on:
        redis:
          condition: service_healthy
-     volumes:
--      - ./scripts/lisk/docker/${NETWORK:-mainnet}/setCommonEnv.sh:/home/lisk/across-relayer/scripts/setCommonEnv.sh
--      - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStart_relayer1.sh:/home/lisk/across-relayer/scripts/start.sh
++    volumes:
 +      - ./.aws/credentials:/home/lisk/.aws/credentials
-+      - ./scripts/lisk/docker/${NETWORK:-sepolia}/setCommonEnv.sh:/home/lisk/across-relayer/scripts/setCommonEnv.sh
-+      - ./scripts/lisk/docker/${NETWORK:-sepolia}/containerStart_relayer1.sh:/home/lisk/across-relayer/scripts/start.sh
      networks:
        - across_relayer_network
      restart: always
-     command: ["/bin/sh", "/home/lisk/across-relayer/scripts/start.sh"]
+-    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-mainnet}/containerStart_relayer_1.sh"]
 -    logging:
--       driver: awslogs
--       options:
--         awslogs-region: eu-west-3
--         awslogs-group: /ec2/lisk-across-relayer
--         awslogs-stream: ec2/lisk.across.relayer.docker.log
+-      driver: awslogs
+-      options:
+-        awslogs-region: eu-west-3
+-        awslogs-group: /ec2/lisk-across-relayer
+-        awslogs-stream: ec2/lisk.across.relayer.docker.log
++    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-sepolia}/containerStart_relayer_1.sh"]
 +    # logging:
-+    #    driver: awslogs
-+    #    options:
-+    #      awslogs-region: eu-west-3
-+    #      awslogs-group: /ec2/lisk-across-relayer
-+    #      awslogs-stream: ec2/lisk.across.relayer.docker.log
++    #   driver: awslogs
++    #   options:
++    #     awslogs-region: eu-west-3
++    #     awslogs-group: /ec2/lisk-across-relayer
++    #     awslogs-stream: ec2/lisk.across.relayer.docker.log
      environment:
        - REDIS_URL=redis://redis:6379
      ports:
-@@ -43,24 +44,25 @@ services:
-       - "host.docker.internal:host-gateway"
+@@ -40,21 +43,24 @@ services:
  
    rebalancer:
+     container_name: rebalancer
 -    image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
++    # image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
 +    build: .
      platform: linux/amd64
      depends_on:
        redis:
          condition: service_healthy
-     volumes:
--      - ./scripts/lisk/docker/${NETWORK:-mainnet}/setCommonEnv.sh:/home/lisk/across-rebalancer/scripts/setCommonEnv.sh
--      - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStart_rebalancer.sh:/home/lisk/across-rebalancer/scripts/start.sh
++    volumes:
 +      - ./.aws/credentials:/home/lisk/.aws/credentials
-+      - ./scripts/lisk/docker/${NETWORK:-sepolia}/setCommonEnv.sh:/home/lisk/across-rebalancer/scripts/setCommonEnv.sh
-+      - ./scripts/lisk/docker/${NETWORK:-sepolia}/containerStart_rebalancer.sh:/home/lisk/across-rebalancer/scripts/start.sh
      networks:
        - across_relayer_network
      restart: always
-     command: ["/bin/sh", "/home/lisk/across-rebalancer/scripts/start.sh"]
+-    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-mainnet}/containerStart_rebalancer.sh"]
 -    logging:
 -      driver: awslogs
 -      options:
 -        awslogs-region: eu-west-3
 -        awslogs-group: /ec2/lisk-across-relayer
 -        awslogs-stream: ec2/lisk.across.rebalancer.docker.log
++    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-sepolia}/containerStart_rebalancer.sh"]
 +    # logging:
 +    #   driver: awslogs
 +    #   options:

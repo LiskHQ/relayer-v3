@@ -1,6 +1,16 @@
 #!/bin/bash
 
-. $(dirname $(realpath "$0"))/setCommonEnv.sh
+. $(dirname $(realpath "$0"))/sourceCommonEnv.sh
+
+# API server settings
+API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_HOST"`
+echo "API_SERVER_HOST=$API_SERVER_HOST" >> ${app_dir}/.env
+
+API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_PORT"`
+echo "API_SERVER_PORT=$API_SERVER_PORT" >> ${app_dir}/.env
+
+# Set the bot identifier
+echo "BOT_IDENTIFIER=LISK_SEPOLIA_ACROSS_REBALANCER"  >> ${env_file}
 
 # Relaying OFF rebalancing ON
 echo "SEND_RELAYS=false" >> ${env_file}
@@ -8,6 +18,7 @@ echo "SEND_REBALANCES=true"  >> ${env_file}
 
 # Looping mode OFF
 echo "POLLING_DELAY=0" >> ${env_file}
+
 echo "All env vars are set."
 
 node ${app_dir}/dist/index.js --relayer --wallet awskms --keys relayerKey
