@@ -1,14 +1,23 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index a7c691c..dafd6c6 100644
+index 2560875..c48f5a5 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -21,18 +21,19 @@ services:
+@@ -15,24 +15,25 @@ services:
+       retries: 3
+ 
+   relayer_1:
+-    image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
++    build: .
+     platform: linux/amd64
+     depends_on:
        redis:
          condition: service_healthy
      volumes:
+-      - ./scripts/lisk/docker/${NETWORK:-mainnet}/setCommonEnv.sh:/home/lisk/across-relayer/scripts/setCommonEnv.sh
+-      - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStart_relayer1.sh:/home/lisk/across-relayer/scripts/start.sh
 +      - ./.aws/credentials:/home/lisk/.aws/credentials
-       - ./scripts/lisk/docker/${NETWORK:-mainnet}/setCommonEnv.sh:/home/lisk/across-relayer/scripts/setCommonEnv.sh
-       - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStart_relayer1.sh:/home/lisk/across-relayer/scripts/start.sh
++      - ./scripts/lisk/docker/${NETWORK:-sepolia}/setCommonEnv.sh:/home/lisk/across-relayer/scripts/setCommonEnv.sh
++      - ./scripts/lisk/docker/${NETWORK:-sepolia}/containerStart_relayer1.sh:/home/lisk/across-relayer/scripts/start.sh
      networks:
        - across_relayer_network
      restart: always
@@ -28,13 +37,22 @@ index a7c691c..dafd6c6 100644
      environment:
        - REDIS_URL=redis://redis:6379
      ports:
-@@ -49,18 +50,19 @@ services:
+@@ -43,24 +44,25 @@ services:
+       - "host.docker.internal:host-gateway"
+ 
+   rebalancer:
+-    image: ${AWS_ECR_REGISTRY}/${AWS_ECR_REPOSITORY}:${ACROSS_RELAYER_IMAGE_TAG}
++    build: .
+     platform: linux/amd64
+     depends_on:
        redis:
          condition: service_healthy
      volumes:
+-      - ./scripts/lisk/docker/${NETWORK:-mainnet}/setCommonEnv.sh:/home/lisk/across-rebalancer/scripts/setCommonEnv.sh
+-      - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStart_rebalancer.sh:/home/lisk/across-rebalancer/scripts/start.sh
 +      - ./.aws/credentials:/home/lisk/.aws/credentials
-       - ./scripts/lisk/docker/${NETWORK:-mainnet}/setCommonEnv.sh:/home/lisk/across-rebalancer/scripts/setCommonEnv.sh
-       - ./scripts/lisk/docker/${NETWORK:-mainnet}/containerStart_rebalancer.sh:/home/lisk/across-rebalancer/scripts/start.sh
++      - ./scripts/lisk/docker/${NETWORK:-sepolia}/setCommonEnv.sh:/home/lisk/across-rebalancer/scripts/setCommonEnv.sh
++      - ./scripts/lisk/docker/${NETWORK:-sepolia}/containerStart_rebalancer.sh:/home/lisk/across-rebalancer/scripts/start.sh
      networks:
        - across_relayer_network
      restart: always
