@@ -28,11 +28,11 @@ services:
     restart: always
     command: ["/bin/sh", "/home/lisk/across-relayer/scripts/start.sh"]
     logging:
-       driver: awslogs
-       options:
-         awslogs-region: eu-west-3
-         awslogs-group: /ec2/lisk-across-relayer
-         awslogs-stream: ec2/lisk.across.relayer.docker.log
+      driver: awslogs
+      options:
+        awslogs-region: eu-west-3
+        awslogs-group: /ec2/lisk-across-relayer
+        awslogs-stream: ec2/lisk.across.relayer.docker.log
     environment:
       - REDIS_URL=redis://redis:6379
     ports:
