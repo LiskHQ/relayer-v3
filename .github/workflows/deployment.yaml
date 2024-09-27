@@ -1,4 +1,4 @@
-name: Build docker image
+name: Deployment
 
 on:
   push:
@@ -38,6 +38,12 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ steps.docker-image.outputs.image }}:latest
-            ${{ steps.docker-image.outputs.image }}:${{ github.sha }}
+          tags: ${{ steps.docker-image.outputs.image }}:${{ github.sha }}
+
+      - name: Deploy to CodeDeploy
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ secrets.AWS_CODEDEPLOY_APPLICATION_NAME }} \
+            --deployment-group-name ${{ secrets.AWS_CODEDEPLOY_DEPLOYMENT_GROUP }} \
+            --github-location repository=${{ github.repository }},commitId=${{ github.sha }} \
+            --description "Deploying Across Relayer Docker image to EC2 instance"
