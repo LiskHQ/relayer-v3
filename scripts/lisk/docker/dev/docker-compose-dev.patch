@@ -1,5 +1,5 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 537902cb..1a42cba7 100644
+index 871674f2..303cb03c 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
 @@ -16,21 +16,24 @@ services:
@@ -67,4 +67,4 @@ index 537902cb..1a42cba7 100644
 +    #     awslogs-stream: ec2/lisk.across.rebalancer.docker.log
      environment:
        - REDIS_URL=redis://redis:6379
-     ports:
+ 

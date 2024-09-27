@@ -2,12 +2,8 @@
 
 . $(dirname $(realpath "$0"))/sourceCommonEnv.sh
 
-# API server settings
-API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_HOST"`
-echo "API_SERVER_HOST=$API_SERVER_HOST" >> ${app_dir}/.env
-
-API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_PORT"`
-echo "API_SERVER_PORT=$API_SERVER_PORT" >> ${app_dir}/.env
+# Override SLACK_CONFIG for rebalancer to avoid noise on Slack due to the frequent restarts (every 6 secs)
+echo "SLACK_CONFIG=" >> ${env_file}
 
 # Set the bot identifier
 echo "BOT_IDENTIFIER=LISK_ACROSS_REBALANCER"  >> ${env_file}
@@ -20,5 +16,8 @@ echo "SEND_REBALANCES=true"  >> ${env_file}
 echo "POLLING_DELAY=0" >> ${env_file}
 
 echo "All env vars are set."
+
+# Restart rebalancer every 5 mins
+sleep 300
 
 node ${app_dir}/dist/index.js --relayer --wallet awskms --keys relayerKey
