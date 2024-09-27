@@ -1,5 +1,6 @@
 #!/bin/bash
-app_dir=$PWD
+app_dir=/home/lisk/across-relayer
+cd $app_dir
 echo "Current DIR: $PWD"
 
 # Remove previous .env var if any
@@ -28,23 +29,8 @@ echo "RPC_PROVIDER_DRPC_1135=$RPC_PROVIDER_DRPC_1135" >> ${env_file}
 RPC_PROVIDER_GELATO_1135=`echo $RELAYER_CONFIG | jq -r ."RPC_PROVIDER_GELATO_1135"`
 echo "RPC_PROVIDER_GELATO_1135=$RPC_PROVIDER_GELATO_1135" >> ${env_file}
 
-API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_HOST"`
-echo "API_SERVER_HOST=$API_SERVER_HOST" >> ${app_dir}/.env
-
-API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_PORT"`
-echo "API_SERVER_PORT=$API_SERVER_PORT" >> ${app_dir}/.env
-
 SLACK_CONFIG=`echo $RELAYER_CONFIG | jq -r ."SLACK_CONFIG"`
 echo "SLACK_CONFIG=$SLACK_CONFIG" >> ${env_file}
-
-echo "All env vars from secrets are set."
-
-# Set the bot identifier
-echo "BOT_IDENTIFIER=LISK_ACROSS_RELAYER_1"  >> ${env_file}
-
-# Simulation mode OFF
-echo "SEND_RELAYS=true" >> ${env_file}
-echo "SEND_REBALANCES=true"  >> ${env_file}
 
 # RPC provider configuration
 echo "RPC_PROVIDERS=DRPC,GELATO,TENDERLY" >> ${env_file}
@@ -65,6 +51,4 @@ echo RELAYER_TOKENS=\'[\"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2\", \"0x6033F
 echo MIN_DEPOSIT_CONFIRMATIONS=\'{\"5000\": { \"1\": 5, \"1135\": 10 }, \"2000\": { \"1\": 4, \"1135\": 10 }, \"100\": { \"1\": 3, \"1135\": 10 } }\' >> ${env_file}
 echo RELAYER_EXTERNAL_INVENTORY_CONFIG=\'config/mainnet/relayerExternalInventory.json\' >> ${env_file}
 
-echo "All env vars are set."
-
-node ${app_dir}/dist/index.js --relayer --wallet awskms --keys relayerKey
+echo "All common env vars are set."

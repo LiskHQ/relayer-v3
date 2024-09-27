@@ -4,3 +4,8 @@ package-lock.json
 env
 dist
 .DS_Store
+
+# Dev scripts
+
+scripts/**/dev
+scripts/**/local

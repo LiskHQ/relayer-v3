@@ -1,5 +1,6 @@
 #!/bin/bash
-app_dir=$PWD
+app_dir=/home/lisk/across-relayer
+cd $app_dir
 echo "Current DIR: $PWD"
 
 # Remove previous .env var if any
@@ -31,21 +32,6 @@ echo "RPC_PROVIDER_GELATO_4202=$RPC_PROVIDER_GELATO_4202" >> ${env_file}
 HUB_CHAIN_ID=`echo $RELAYER_CONFIG | jq -r ."HUB_CHAIN_ID"`
 echo "HUB_CHAIN_ID=$HUB_CHAIN_ID" >> ${env_file}
 
-API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_HOST"`
-echo "API_SERVER_HOST=$API_SERVER_HOST" >> ${app_dir}/.env
-
-API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_PORT"`
-echo "API_SERVER_PORT=$API_SERVER_PORT" >> ${app_dir}/.env
-
-echo "All env vars from secrets are set."
-
-# Set the bot identifier
-echo "BOT_IDENTIFIER=LISK_ACROSS_RELAYER_SEPOLIA"  >> ${env_file}
-
-# Simulation mode ON
-echo "SEND_RELAYS=false" >> ${env_file}
-echo "SEND_REBALANCES=false"  >> ${env_file}
-
 # RPC provider configuration
 echo "RPC_PROVIDERS=DRPC,GELATO,TENDERLY" >> ${env_file}
 echo "RPC_PROVIDERS_11155111=DRPC,TENDERLY" >> ${env_file}
@@ -61,10 +47,10 @@ echo "PRIORITY_FEE_SCALER_11155111=0.8"  >> ${env_file}
 echo "RELAYER_GAS_PADDING=0"  >> ${env_file}
 
 # Supported token settings
-echo RELAYER_TOKENS=\'[\"0x16B840bA01e2b05fc2268eAf6d18892a11EC29D6\", \"0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0\", \"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14\"]\'  >> ${env_file}
+# Use only WETH until Across adds rebalancer support for LSK and USDT on Sepolia
+# echo RELAYER_TOKENS=\'[\"0x16B840bA01e2b05fc2268eAf6d18892a11EC29D6\", \"0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0\", \"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14\"]\'  >> ${env_file}
+echo RELAYER_TOKENS=\'[\"0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14\"]\'  >> ${env_file}
 echo MIN_DEPOSIT_CONFIRMATIONS=\'{ \"1000000\": { \"919\": 1, \"4202\": 1, \"80002\": 1, \"84532\": 1, \"421614\": 1, \"11155111\": 1, \"11155420\": 1 } }\' >> ${env_file}
 echo RELAYER_EXTERNAL_INVENTORY_CONFIG=\'/home/lisk/across-relayer/config/sepolia/relayerExternalInventory.json\' >> ${env_file}
 
-echo "All env vars are set."
-
-node ${app_dir}/dist/index.js --relayer --wallet awskms --keys relayerKey
+echo "All common env vars are set."
