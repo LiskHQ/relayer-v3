@@ -1,6 +1,6 @@
 # dotfiles are ignored by default and must be added explicitly. Use
 # `git add -f <dotfile>` add a dotfile. Only do this for public files.
-.env
+*.env*
 .secret
 
 node_modules
@@ -16,3 +16,6 @@ dist
 
 # Debugging files
 *.log
+
+# Exclude .env.example
+!.env.example

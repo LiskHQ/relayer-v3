@@ -1,29 +1,14 @@
 #!/bin/bash
 set -eu
 
-# Set env var from secrets
-secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:mainnet/lisk-across-relayer/aws-CSi7ka
-# secret_id=arn:aws:secretsmanager:eu-west-3:132202091885:secret:sepolia/across-relayer-dev/aws-7CIqpl
-RELAYER_CONFIG=`aws --region eu-west-3 secretsmanager get-secret-value --secret-id ${secret_id} | jq --raw-output .SecretString | jq -r .`
-
 echo "Setting environment variables within the current shell on the host"
 
-export AWS_REGION=`echo $RELAYER_CONFIG | jq -r ."AWS_REGION"`
+# Retreive env vars from S3 bucket and source them
+source_env_file_name=across-relayer-mainnet.env
+env_file_name=.${source_env_file_name}
 
-export AWS_ECR_REGISTRY=`echo $RELAYER_CONFIG | jq -r ."AWS_ECR_REGISTRY"`
-
-export AWS_ECR_REPOSITORY=`echo $RELAYER_CONFIG | jq -r ."AWS_ECR_REPOSITORY"`
-
-export ACROSS_RELAYER_IMAGE_TAG=`echo $RELAYER_CONFIG | jq -r ."ACROSS_RELAYER_IMAGE_TAG"`
-
-export NETWORK=`echo $RELAYER_CONFIG | jq -r ."NETWORK"`
-
-export RELAYER_1_API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_HOST"`
-
-export REBALANCER_API_SERVER_HOST=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_HOST"`
-
-export RELAYER_1_API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."RELAYER_1_API_SERVER_PORT"`
-
-export REBALANCER_API_SERVER_PORT=`echo $RELAYER_CONFIG | jq -r ."REBALANCER_API_SERVER_PORT"`
+aws s3 cp s3://lisk-envs/$source_env_file_name ${env_file_name}
+source ${env_file_name}
+rm -f ${env_file_name}
 
 echo "Finished setting all the environment variables within the current shell on the host"
