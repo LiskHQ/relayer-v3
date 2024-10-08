@@ -6,7 +6,5 @@ files:
 hooks:
   ApplicationStop:
     - location: scripts/lisk/docker/composeStop.sh
-      timeout: 330
   ApplicationStart:
     - location: scripts/lisk/docker/composeStart.sh
-      timeout: 300
