@@ -38,6 +38,7 @@ dist/
 *.lock
 *.keep
 *.txt
+*.conf
 
 # env example files
 *.env.example
