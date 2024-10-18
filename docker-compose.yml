@@ -61,7 +61,6 @@ services:
       - across_relayer_network
     volumes:
       - ./fluentbit_config:/fluent-bit/etc
-      - ~/.aws:/root/.aws # TODO: Remove this before commit
     ports:
       - "24224:24224"
       - "24224:24224/udp"
