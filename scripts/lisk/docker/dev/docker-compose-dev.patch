@@ -1,8 +1,8 @@
 diff --git a/docker-compose.yml b/docker-compose.yml
-index 871674f2..303cb03c 100644
+index c92b5456..3253a2cb 100644
 --- a/docker-compose.yml
 +++ b/docker-compose.yml
-@@ -16,21 +16,24 @@ services:
+@@ -16,7 +16,8 @@ services:
  
    relayer_1:
      container_name: relayer_1
@@ -12,30 +12,20 @@ index 871674f2..303cb03c 100644
      platform: linux/amd64
      depends_on:
        redis:
-         condition: service_healthy
-+    volumes:
-+      - ./.aws/credentials:/home/lisk/.aws/credentials
+@@ -26,9 +27,11 @@ services:
      networks:
        - across_relayer_network
      restart: always
 -    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-mainnet}/containerStart_relayer_1.sh"]
--    logging:
--      driver: awslogs
--      options:
--        awslogs-region: eu-west-3
--        awslogs-group: /ec2/lisk-across-relayer
--        awslogs-stream: ec2/lisk.across.relayer.docker.log
 +    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-sepolia}/containerStart_relayer_1.sh"]
-+    # logging:
-+    #   driver: awslogs
-+    #   options:
-+    #     awslogs-region: eu-west-3
-+    #     awslogs-group: /ec2/lisk-across-relayer
-+    #     awslogs-stream: ec2/lisk.across.relayer.docker.log
+     logging:
+       driver: fluentd
++    volumes:
++      - ./.aws/credentials:/home/lisk/.aws/credentials
      environment:
        - REDIS_URL=redis://redis:6379
      ports:
-@@ -40,21 +43,24 @@ services:
+@@ -38,7 +41,8 @@ services:
  
    rebalancer:
      container_name: rebalancer
@@ -45,26 +35,24 @@ index 871674f2..303cb03c 100644
      platform: linux/amd64
      depends_on:
        redis:
-         condition: service_healthy
-+    volumes:
-+      - ./.aws/credentials:/home/lisk/.aws/credentials
+@@ -48,9 +52,11 @@ services:
      networks:
        - across_relayer_network
      restart: always
 -    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-mainnet}/containerStart_rebalancer.sh"]
--    logging:
--      driver: awslogs
--      options:
--        awslogs-region: eu-west-3
--        awslogs-group: /ec2/lisk-across-relayer
--        awslogs-stream: ec2/lisk.across.rebalancer.docker.log
 +    command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-sepolia}/containerStart_rebalancer.sh"]
-+    # logging:
-+    #   driver: awslogs
-+    #   options:
-+    #     awslogs-region: eu-west-3
-+    #     awslogs-group: /ec2/lisk-across-relayer
-+    #     awslogs-stream: ec2/lisk.across.rebalancer.docker.log
+     logging:
+       driver: fluentd
++    volumes:
++      - ./.aws/credentials:/home/lisk/.aws/credentials
      environment:
        - REDIS_URL=redis://redis:6379
  
+@@ -61,6 +67,7 @@ services:
+       - across_relayer_network
+     volumes:
+       - ./fluentbit_config:/fluent-bit/etc
++      - ./.aws/credentials:/home/lisk/.aws/credentials
+     ports:
+       - "24224:24224"
+       - "24224:24224/udp"
