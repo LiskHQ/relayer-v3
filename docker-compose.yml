@@ -21,16 +21,14 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      fluent-bit:
+        condition: service_healthy
     networks:
       - across_relayer_network
     restart: always
     command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-mainnet}/containerStart_relayer_1.sh"]
     logging:
-      driver: awslogs
-      options:
-        awslogs-region: eu-west-3
-        awslogs-group: /ec2/lisk-across-relayer
-        awslogs-stream: ec2/lisk.across.relayer.docker.log
+      driver: fluentd
     environment:
       - REDIS_URL=redis://redis:6379
     ports:
@@ -45,18 +43,32 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      fluent-bit:
+        condition: service_healthy
     networks:
       - across_relayer_network
     restart: always
     command: ["/bin/sh", "/home/lisk/across-relayer/scripts/${NETWORK:-mainnet}/containerStart_rebalancer.sh"]
     logging:
-      driver: awslogs
-      options:
-        awslogs-region: eu-west-3
-        awslogs-group: /ec2/lisk-across-relayer
-        awslogs-stream: ec2/lisk.across.rebalancer.docker.log
+      driver: fluentd
     environment:
       - REDIS_URL=redis://redis:6379
+
+  fluent-bit:
+    image: amazon/aws-for-fluent-bit:2.32.2
+    container_name: fluent-bit
+    networks:
+      - across_relayer_network
+    volumes:
+      - ./fluentbit_config:/fluent-bit/etc
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2020/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 networks:
   across_relayer_network:
