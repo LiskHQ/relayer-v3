@@ -6,11 +6,13 @@ import { Contract, ethers, Signer } from "ethers";
 import { LogDescription } from "@ethersproject/abi";
 import { constants as sdkConsts, utils as sdkUtils } from "@across-protocol/sdk";
 import { ExpandedERC20__factory as ERC20 } from "@across-protocol/contracts";
+import { RelayData } from "../src/interfaces";
 import {
   BigNumber,
   formatFeePct,
   getDeploymentBlockNumber,
   getNetworkName,
+  getProvider,
   getSigner,
   isDefined,
   resolveTokenSymbols,
@@ -62,11 +64,18 @@ function printDeposit(originChainId: number, log: LogDescription): void {
 function printFill(destinationChainId: number, log: LogDescription): void {
   const { originChainId, outputToken } = log.args;
   const eventArgs = Object.keys(log.args).filter((key) => isNaN(Number(key)));
-  const padLeft = eventArgs.reduce((acc, cur) => (cur.length > acc ? cur.length : acc), 0);
+
+  const relayDataHash = sdkUtils.getRelayDataHash(
+    Object.fromEntries(eventArgs.map((arg) => [arg, log.args[arg]])) as RelayData,
+    destinationChainId
+  );
+
+  const padLeft = [...eventArgs, "relayDataHash"].reduce((acc, cur) => (cur.length > acc ? cur.length : acc), 0);
 
   const fields = {
     tokenSymbol: resolveTokenSymbols([outputToken], destinationChainId)[0],
     ...Object.fromEntries(eventArgs.map((key) => [key, log.args[key]])),
+    relayDataHash,
   };
   console.log(
     `Fill for ${getNetworkName(originChainId)} deposit # ${log.args.depositId}:\n` +
@@ -186,7 +195,7 @@ async function deposit(args: Record<string, number | string>, signer: Signer): P
   const tokenSymbol = token.symbol.toUpperCase();
   const amount = ethers.utils.parseUnits(baseAmount.toString(), args.decimals ? 0 : token.decimals);
 
-  const provider = new ethers.providers.StaticJsonRpcProvider(utils.getProviderUrl(fromChainId));
+  const provider = await getProvider(fromChainId);
   signer = signer.connect(provider);
   const spokePool = (await utils.getSpokePoolContract(fromChainId)).connect(signer);
 
@@ -238,7 +247,7 @@ async function fillDeposit(args: Record<string, number | string | boolean>, sign
     throw new Error(`Missing or malformed transaction hash: ${txnHash}`);
   }
 
-  const originProvider = new ethers.providers.StaticJsonRpcProvider(utils.getProviderUrl(originChainId));
+  const originProvider = await getProvider(originChainId);
   const originSpokePool = await utils.getSpokePoolContract(originChainId);
   const spokePools: { [chainId: number]: Contract } = {};
 
@@ -313,7 +322,7 @@ async function fillDeposit(args: Record<string, number | string | boolean>, sign
     }
 
     const sender = await signer.getAddress();
-    const destProvider = new ethers.providers.StaticJsonRpcProvider(utils.getProviderUrl(destinationChainId));
+    const destProvider = await getProvider(destinationChainId);
     const destSigner = signer.connect(destProvider);
 
     const erc20 = new Contract(outputToken, ERC20.abi, destSigner);
@@ -340,7 +349,7 @@ async function dumpConfig(args: Record<string, number | string>, _signer: Signer
   const _spokePool = await utils.getSpokePoolContract(chainId);
 
   const hubChainId = utils.resolveHubChainId(chainId);
-  const spokeProvider = new ethers.providers.StaticJsonRpcProvider(utils.getProviderUrl(chainId));
+  const spokeProvider = await getProvider(chainId);
   const spokePool = _spokePool.connect(spokeProvider);
 
   const [spokePoolChainId, hubPool, crossDomainAdmin, weth, _currentTime] = await Promise.all([
@@ -428,7 +437,7 @@ async function fetchTxn(args: Record<string, number | string>, _signer: Signer):
     return false;
   }
 
-  const provider = new ethers.providers.StaticJsonRpcProvider(utils.getProviderUrl(chainId));
+  const provider = await getProvider(chainId);
   const spokePool = (await utils.getSpokePoolContract(chainId)).connect(provider);
 
   let deposits: Log[] = [];

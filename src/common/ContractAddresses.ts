@@ -5,8 +5,9 @@ import ATOMIC_DEPOSITOR_ABI from "./abi/AtomicDepositor.json";
 import WETH_ABI from "./abi/Weth.json";
 import HUB_POOL_ABI from "./abi/HubPool.json";
 import VOTING_V2_ABI from "./abi/VotingV2.json";
-import OVM_L2_STANDARD_BRIDGE_ABI from "./abi/OpStackStandardBridgeL2.json";
+import OP_USDC_BRIDGE_ABI from "./abi/OpStackUSDCBridge.json";
 import OVM_L1_STANDARD_BRIDGE_ABI from "./abi/OpStackStandardBridgeL1.json";
+import OVM_L2_STANDARD_BRIDGE_ABI from "./abi/OpStackStandardBridgeL2.json";
 import SNX_OPTIMISM_BRIDGE_L1_ABI from "./abi/SnxOptimismBridgeL1.json";
 import SNX_OPTIMISM_BRIDGE_L2_ABI from "./abi/SnxOptimismBridgeL2.json";
 import DAI_OPTIMISM_BRIDGE_L1_ABI from "./abi/DaiOptimismBridgeL1.json";
@@ -18,6 +19,7 @@ import ZK_SYNC_DEFAULT_ERC20_BRIDGE_L1_ABI from "./abi/ZkSyncDefaultErc20BridgeL
 import ZK_SYNC_DEFAULT_ERC20_BRIDGE_L2_ABI from "./abi/ZkSyncDefaultErc20BridgeL2.json";
 import ZK_SYNC_MAILBOX_ABI from "./abi/ZkSyncMailbox.json";
 import ARBITRUM_ERC20_GATEWAY_ROUTER_L1_ABI from "./abi/ArbitrumErc20GatewayRouterL1.json";
+import ARBITRUM_ERC20_GATEWAY_L1_ABI from "./abi/ArbitrumErc20GatewayL1.json";
 import ARBITRUM_ERC20_GATEWAY_L2_ABI from "./abi/ArbitrumErc20GatewayL2.json";
 import ARBITRUM_OUTBOX_ABI from "./abi/ArbitrumOutbox.json";
 import LINEA_MESSAGE_SERVICE_ABI from "./abi/LineaMessageService.json";
@@ -73,13 +75,21 @@ export const CONTRACT_ADDRESSES: {
     // OVM, ZkSync, Linea, and Polygon can't deposit WETH directly so we use an atomic depositor contract that unwraps WETH and
     // bridges ETH other the canonical bridge.
     atomicDepositor: {
-      address: "0xE48278aD2b9b402A8E3C2E0ffbaD7EEe3905bf94",
+      address: "0xa679201903847f3723Dc88CA7530c8B665bC51a5",
       abi: ATOMIC_DEPOSITOR_ABI,
+    },
+    opUSDCBridge_480: {
+      address: "0x153A69e4bb6fEDBbAaF463CB982416316c84B2dB",
+      abi: OP_USDC_BRIDGE_ABI,
     },
     // Since there are multiple ovmStandardBridges on mainnet for different OP Stack chains, we append the chain id of the Op
     // Stack chain to the name to differentiate. This one is for Optimism.
     ovmStandardBridge_10: {
       address: "0x99C9fc46f92E8a1c0deC1b1747d010903E884bE1",
+      abi: OVM_L1_STANDARD_BRIDGE_ABI,
+    },
+    ovmStandardBridge_480: {
+      address: "0x470458C91978D2d929704489Ad730DC3E3001113",
       abi: OVM_L1_STANDARD_BRIDGE_ABI,
     },
     ovmStandardBridge_690: {
@@ -118,9 +128,23 @@ export const CONTRACT_ADDRESSES: {
       address: "0x8484Ef722627bf18ca5Ae6BcF031c23E6e922B30",
       abi: POLYGON_BRIDGE_ABI,
     },
-    arbitrumErc20GatewayRouter: {
+    orbitOutbox_42161: {
+      address: "0x0B9857ae2D4A3DBe74ffE1d7DF045bb7F96E4840",
+      abi: ARBITRUM_OUTBOX_ABI,
+    },
+    orbitErc20GatewayRouter_42161: {
       address: "0x72Ce9c846789fdB6fC1f34aC4AD25Dd9ef7031ef",
       abi: ARBITRUM_ERC20_GATEWAY_ROUTER_L1_ABI,
+    },
+    orbitErc20Gateway_42161: {
+      abi: ARBITRUM_ERC20_GATEWAY_L1_ABI,
+    },
+    orbitErc20GatewayRouter_41455: {
+      address: "0xeBb17f398ed30d02F2e8733e7c1e5cf566e17812",
+      abi: ARBITRUM_ERC20_GATEWAY_ROUTER_L1_ABI,
+    },
+    orbitErc20Gateway_41455: {
+      abi: ARBITRUM_ERC20_GATEWAY_L1_ABI,
     },
     VotingV2: {
       address: "0x004395edb43EFca9885CEdad51EC9fAf93Bd34ac",
@@ -225,6 +249,19 @@ export const CONTRACT_ADDRESSES: {
       abi: WETH_ABI,
     },
   },
+  480: {
+    opUSDCBridge: {
+      address: "0xbD80b06d3dbD0801132c6689429aC09Ca6D27f82",
+      abi: OP_USDC_BRIDGE_ABI,
+    },
+    ovmStandardBridge: {
+      address: "0x4200000000000000000000000000000000000010",
+      abi: OVM_L2_STANDARD_BRIDGE_ABI,
+    },
+    eth: {
+      address: "0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000",
+    },
+  },
   690: {
     ovmStandardBridge: {
       address: "0x4200000000000000000000000000000000000010",
@@ -286,10 +323,6 @@ export const CONTRACT_ADDRESSES: {
     erc20Gateway: {
       abi: ARBITRUM_ERC20_GATEWAY_L2_ABI,
     },
-    outbox: {
-      address: "0x0B9857ae2D4A3DBe74ffE1d7DF045bb7F96E4840",
-      abi: ARBITRUM_OUTBOX_ABI,
-    },
     cctpMessageTransmitter: {
       address: "0xC30362313FBBA5cf9163F0bb16a0e01f01A896ca",
       abi: CCTP_MESSAGE_TRANSMITTER_ABI,
@@ -297,6 +330,11 @@ export const CONTRACT_ADDRESSES: {
     cctpTokenMessenger: {
       address: "0x19330d10D9Cc8751218eaf51E8885D058642E08A",
       abi: CCTP_TOKEN_MESSENGER_ABI,
+    },
+  },
+  41455: {
+    erc20Gateway: {
+      abi: ARBITRUM_ERC20_GATEWAY_L2_ABI,
     },
   },
   59144: {
