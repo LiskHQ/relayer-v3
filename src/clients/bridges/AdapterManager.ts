@@ -9,10 +9,11 @@ import {
 import { InventoryConfig, OutstandingTransfers } from "../../interfaces";
 import { BigNumber, isDefined, winston, Signer, getL2TokenAddresses, TransactionResponse, assert } from "../../utils";
 import { SpokePoolClient, HubPoolClient } from "../";
-import { ArbitrumAdapter, PolygonAdapter, ZKSyncAdapter, LineaAdapter, OpStackAdapter, ScrollAdapter } from "./";
+import { ArbitrumAdapter, PolygonAdapter, ZKSyncAdapter, LineaAdapter, ScrollAdapter } from "./";
 import { CHAIN_IDs, TOKEN_SYMBOLS_MAP } from "@across-protocol/constants";
 
 import { BaseChainAdapter } from "../../adapter";
+import { EthereumAdapter } from "./EthereumAdapter";
 
 export class AdapterManager {
   public adapters: { [chainId: number]: BaseChainAdapter } = {};
@@ -21,7 +22,7 @@ export class AdapterManager {
   // receiving ETH that needs to be wrapped on the L2. This array contains the chainIds of the chains that this
   // manager will attempt to wrap ETH on into WETH. This list also includes chains like Arbitrum where the relayer is
   // expected to receive ETH as a gas refund from an L1 to L2 deposit that was intended to rebalance inventory.
-  public chainsToWrapEtherOn = [...spokesThatHoldEthAndWeth, CHAIN_IDs.ARBITRUM];
+  private chainsToWrapEtherOn = [...spokesThatHoldEthAndWeth, CHAIN_IDs.ARBITRUM, CHAIN_IDs.MAINNET];
 
   constructor(
     readonly logger: winston.Logger,
@@ -45,7 +46,8 @@ export class AdapterManager {
       );
     };
 
-    const { OPTIMISM, ARBITRUM, POLYGON, ZK_SYNC, BASE, MODE, LINEA, LISK, BLAST, REDSTONE, SCROLL, ZORA } = CHAIN_IDs;
+    const { OPTIMISM, ARBITRUM, POLYGON, ZK_SYNC, BASE, MODE, LINEA, LISK, BLAST, REDSTONE, SCROLL, ZORA, ALEPH_ZERO } =
+      CHAIN_IDs;
     const hubChainId = hubPoolClient.chainId;
     const l1Signer = spokePoolClients[hubChainId].spokePool.signer;
     const constructBridges = (chainId: number) => {
@@ -60,12 +62,15 @@ export class AdapterManager {
       );
     };
     if (this.spokePoolClients[OPTIMISM] !== undefined) {
-      this.adapters[OPTIMISM] = new OpStackAdapter(
+      this.adapters[OPTIMISM] = new BaseChainAdapter(
+        spokePoolClients,
         OPTIMISM,
+        hubChainId,
+        filterMonitoredAddresses(OPTIMISM),
         logger,
         SUPPORTED_TOKENS[OPTIMISM],
-        spokePoolClients,
-        filterMonitoredAddresses(OPTIMISM)
+        constructBridges(OPTIMISM),
+        DEFAULT_GAS_MULTIPLIER[OPTIMISM] ?? 1
       );
     }
     if (this.spokePoolClients[POLYGON] !== undefined) {
@@ -78,12 +83,15 @@ export class AdapterManager {
       this.adapters[ZK_SYNC] = new ZKSyncAdapter(logger, spokePoolClients, filterMonitoredAddresses(ZK_SYNC));
     }
     if (this.spokePoolClients[BASE] !== undefined) {
-      this.adapters[BASE] = new OpStackAdapter(
+      this.adapters[BASE] = new BaseChainAdapter(
+        spokePoolClients,
         BASE,
+        hubChainId,
+        filterMonitoredAddresses(BASE),
         logger,
         SUPPORTED_TOKENS[BASE],
-        spokePoolClients,
-        filterMonitoredAddresses(BASE)
+        constructBridges(BASE),
+        DEFAULT_GAS_MULTIPLIER[BASE] ?? 1
       );
     }
     if (this.spokePoolClients[LINEA] !== undefined) {
@@ -140,6 +148,18 @@ export class AdapterManager {
     if (this.spokePoolClients[SCROLL] !== undefined) {
       this.adapters[SCROLL] = new ScrollAdapter(logger, spokePoolClients, filterMonitoredAddresses(SCROLL));
     }
+    if (this.spokePoolClients[CHAIN_IDs.WORLD_CHAIN] !== undefined) {
+      this.adapters[CHAIN_IDs.WORLD_CHAIN] = new BaseChainAdapter(
+        spokePoolClients,
+        CHAIN_IDs.WORLD_CHAIN,
+        hubChainId,
+        filterMonitoredAddresses(CHAIN_IDs.WORLD_CHAIN),
+        logger,
+        SUPPORTED_TOKENS[CHAIN_IDs.WORLD_CHAIN],
+        constructBridges(CHAIN_IDs.WORLD_CHAIN),
+        DEFAULT_GAS_MULTIPLIER[CHAIN_IDs.WORLD_CHAIN] ?? 1
+      );
+    }
     if (this.spokePoolClients[ZORA] !== undefined) {
       this.adapters[ZORA] = new BaseChainAdapter(
         spokePoolClients,
@@ -150,6 +170,18 @@ export class AdapterManager {
         SUPPORTED_TOKENS[ZORA],
         constructBridges(ZORA),
         DEFAULT_GAS_MULTIPLIER[ZORA] ?? 1
+      );
+    }
+    if (this.spokePoolClients[ALEPH_ZERO] !== undefined) {
+      this.adapters[ALEPH_ZERO] = new BaseChainAdapter(
+        spokePoolClients,
+        ALEPH_ZERO,
+        hubChainId,
+        filterMonitoredAddresses(ALEPH_ZERO),
+        logger,
+        SUPPORTED_TOKENS[ALEPH_ZERO],
+        constructBridges(ALEPH_ZERO),
+        DEFAULT_GAS_MULTIPLIER[ALEPH_ZERO] ?? 1
       );
     }
 
@@ -214,7 +246,14 @@ export class AdapterManager {
           wrapThreshold.gte(wrapTarget),
           `wrapEtherThreshold ${wrapThreshold.toString()} must be >= wrapEtherTarget ${wrapTarget.toString()}`
         );
-        await this.adapters[chainId].wrapEthIfAboveThreshold(wrapThreshold, wrapTarget, simMode);
+        if (chainId === CHAIN_IDs.MAINNET) {
+          // For mainnet, construct one-off adapter to wrap ETH, because Ethereum is typically not a chain
+          // that we have an adapter for.
+          const ethAdapter = new EthereumAdapter(this.logger, this.spokePoolClients);
+          await ethAdapter.wrapEthIfAboveThreshold(wrapThreshold, wrapTarget, simMode);
+        } else {
+          await this.adapters[chainId].wrapEthIfAboveThreshold(wrapThreshold, wrapTarget, simMode);
+        }
       }
     );
   }

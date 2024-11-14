@@ -19,6 +19,7 @@ import {
   winston,
   fixedPointAdjustment,
   TransactionResponse,
+  ZERO_ADDRESS,
 } from "../utils";
 import { RelayerClients } from "./RelayerClientHelper";
 import { RelayerConfig } from "./RelayerConfig";
@@ -118,7 +119,9 @@ export class Relayer {
       tokenClient.clearTokenData();
 
       await configStoreClient.update();
-      await hubPoolClient.update();
+      if (configStoreClient.latestBlockSearched > hubPoolClient.latestBlockSearched) {
+        await hubPoolClient.update();
+      }
     }
 
     await updateSpokePoolClients(spokePoolClients, [
@@ -283,7 +286,11 @@ export class Relayer {
       return false;
     }
 
-    if (deposit.exclusivityDeadline > currentTime && getAddress(deposit.exclusiveRelayer) !== this.relayerAddress) {
+    if (
+      deposit.exclusiveRelayer !== ZERO_ADDRESS &&
+      deposit.exclusivityDeadline > currentTime &&
+      getAddress(deposit.exclusiveRelayer) !== this.relayerAddress
+    ) {
       return false;
     }
 
@@ -292,6 +299,7 @@ export class Relayer {
         at: "Relayer::filterDeposit",
         message: "Skipping deposit including in-protocol token swap.",
         deposit,
+        notificationPath: "across-unprofitable-fills",
       });
       return false;
     }
@@ -620,13 +628,15 @@ export class Relayer {
     }
 
     // If depositor is on the slow deposit list, then send a zero fill to initiate a slow relay and return early.
-    if (slowDepositors?.includes(depositor) && fillStatus === FillStatus.Unfilled) {
-      this.logger.debug({
-        at: "Relayer::evaluateFill",
-        message: "Initiating slow fill for grey listed depositor",
-        depositor,
-      });
-      this.requestSlowFill(deposit);
+    if (slowDepositors?.includes(depositor)) {
+      if (fillStatus === FillStatus.Unfilled) {
+        this.logger.debug({
+          at: "Relayer::evaluateFill",
+          message: "Initiating slow fill for grey listed depositor",
+          depositor,
+        });
+        this.requestSlowFill(deposit);
+      }
       return;
     }
 
