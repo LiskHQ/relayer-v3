@@ -1,7 +1,11 @@
 import assert from "assert";
 import { utils, interfaces, caching } from "@across-protocol/sdk";
 import { SpokePoolClient } from "../clients";
-import { CONSERVATIVE_BUNDLE_FREQUENCY_SECONDS, spokesThatHoldEthAndWeth } from "../common/Constants";
+import {
+  ARWEAVE_TAG_BYTE_LIMIT,
+  CONSERVATIVE_BUNDLE_FREQUENCY_SECONDS,
+  spokesThatHoldEthAndWeth,
+} from "../common/Constants";
 import { CONTRACT_ADDRESSES } from "../common/ContractAddresses";
 import {
   PoolRebalanceLeaf,
@@ -20,6 +24,7 @@ import {
   getTimestampsForBundleEndBlocks,
   isDefined,
   MerkleTree,
+  Profiler,
   TOKEN_SYMBOLS_MAP,
   winston,
 } from "../utils";
@@ -342,7 +347,17 @@ export async function persistDataToArweave(
   logger: winston.Logger,
   tag?: string
 ): Promise<void> {
-  const startTime = performance.now();
+  assert(
+    Buffer.from(tag).length <= ARWEAVE_TAG_BYTE_LIMIT,
+    `Arweave tag cannot exceed ${ARWEAVE_TAG_BYTE_LIMIT} bytes`
+  );
+
+  const profiler = new Profiler({
+    logger,
+    at: "DataworkerUtils#persistDataToArweave",
+  });
+  const mark = profiler.start("persistDataToArweave");
+
   // Check if data already exists on Arweave with the given tag.
   // If so, we don't need to persist it again.
   const [matchingTxns, address, balance] = await Promise.all([
@@ -389,10 +404,8 @@ export async function persistDataToArweave(
       balance: formatWinston(balance),
       notificationPath: "across-arweave",
     });
-    const endTime = performance.now();
-    logger.debug({
-      at: "Dataworker#index",
-      message: `Time to persist data to Arweave: ${endTime - startTime}ms`,
+    mark.stop({
+      message: "Time to persist to Arweave",
     });
   }
 }
