@@ -10,9 +10,9 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@across-protocol/constants": "^3.1.20",
-    "@across-protocol/contracts": "^3.0.16",
-    "@across-protocol/sdk": "^3.3.21",
+    "@across-protocol/constants": "^3.1.22",
+    "@across-protocol/contracts": "^3.0.18",
+    "@across-protocol/sdk": "^3.3.25",
     "@arbitrum/sdk": "^4.0.2",
     "@aws-sdk/client-kms": "^3.592.0",
     "@aws-sdk/client-s3": "^3.592.0",
