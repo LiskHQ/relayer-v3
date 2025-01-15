@@ -36,6 +36,13 @@
         "thresholdPct": 15,
         "targetOverageBuffer": 3
       }
+    },
+    "WBTC": {
+      "1135": {
+        "targetPct": 30,
+        "thresholdPct": 15,
+        "targetOverageBuffer": 3
+      }
     }
   }
 }
