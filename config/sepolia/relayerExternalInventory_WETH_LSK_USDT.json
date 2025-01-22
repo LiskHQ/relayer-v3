@@ -18,23 +18,23 @@
       "4202": {
         "targetPct": 30,
         "thresholdPct": 10,
+        "targetOverageBuffer": 1.5,
         "unwrapWethThreshold": 0.025,
-        "unwrapWethTarget": 0.1,
-        "targetOverageBuffer": 1.5
+        "unwrapWethTarget": 0.1
       }
     },
     "0x16B840bA01e2b05fc2268eAf6d18892a11EC29D6": {
       "4202": {
         "targetPct": 30,
-        "thresholdPct": 10,
-        "targetOverageBuffer": 2.5
+        "thresholdPct": 15,
+        "targetOverageBuffer": 3
       }
     },
     "0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0": {
       "4202": {
         "targetPct": 30,
-        "thresholdPct": 10,
-        "targetOverageBuffer": 1.5
+        "thresholdPct": 15,
+        "targetOverageBuffer": 3
       }
     }
   }
